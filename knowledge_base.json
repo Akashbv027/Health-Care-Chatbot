@@ -1,0 +1,122 @@
+{
+  "vomiting": {
+    "conditions": [
+      "Viral Infection"
+    ],
+    "severity": "medium",
+    "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days",
+    "emergency": false
+  },
+  "body": {
+    "conditions": [
+      "Migraine"
+    ],
+    "severity": "low",
+    "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain",
+    "emergency": false
+  },
+  "pain": {
+    "conditions": [
+      "Migraine"
+    ],
+    "severity": "low",
+    "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain",
+    "emergency": false
+  },
+  "headache": {
+    "conditions": [
+      "Migraine"
+    ],
+    "severity": "low",
+    "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain",
+    "emergency": false
+  },
+  "fever": {
+    "conditions": [
+      "Viral Infection"
+    ],
+    "severity": "medium",
+    "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days",
+    "emergency": false
+  },
+  "cold": {
+    "conditions": [
+      "Migraine"
+    ],
+    "severity": "low",
+    "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain",
+    "emergency": false
+  },
+  "runny": {
+    "conditions": [
+      "Viral Infection"
+    ],
+    "severity": "medium",
+    "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days",
+    "emergency": false
+  },
+  "nose": {
+    "conditions": [
+      "Viral Infection"
+    ],
+    "severity": "medium",
+    "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days",
+    "emergency": false
+  },
+  "fatigue": {
+    "conditions": [
+      "Heart Problem"
+    ],
+    "severity": "high",
+    "advice": "Home: Do not self-medicate. Doctor: Immediate hospital visit – ECG and cardiologist consultation required",
+    "emergency": true
+  },
+  "nausea": {
+    "conditions": [
+      "Viral Infection"
+    ],
+    "severity": "medium",
+    "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days",
+    "emergency": false
+  },
+  "sore": {
+    "conditions": [
+      "Food Poisoning"
+    ],
+    "severity": "medium",
+    "advice": "Home: ORS, light food, fluids. Doctor: ORS after every loose stool + Ondansetron 4mg if vomiting",
+    "emergency": false
+  },
+  "throat": {
+    "conditions": [
+      "Food Poisoning"
+    ],
+    "severity": "medium",
+    "advice": "Home: ORS, light food, fluids. Doctor: ORS after every loose stool + Ondansetron 4mg if vomiting",
+    "emergency": false
+  },
+  "cough": {
+    "conditions": [
+      "Migraine"
+    ],
+    "severity": "low",
+    "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain",
+    "emergency": false
+  },
+  "chest": {
+    "conditions": [
+      "Heart Problem"
+    ],
+    "severity": "high",
+    "advice": "Home: Do not self-medicate. Doctor: Immediate hospital visit – ECG and cardiologist consultation required",
+    "emergency": true
+  },
+  "diarrhea": {
+    "conditions": [
+      "Heart Problem"
+    ],
+    "severity": "high",
+    "advice": "Home: Do not self-medicate. Doctor: Immediate hospital visit – ECG and cardiologist consultation required",
+    "emergency": true
+  }
+}

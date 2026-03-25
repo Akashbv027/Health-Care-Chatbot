@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <h2 class="mb-3">Appointment</h2>
+
+  {# If a single appointment object is provided #}
+  {% if appointment %}
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">{{ appointment.doctor_name }}</h5>
+        <p class="card-text">
+          <strong>Date & Time:</strong>
+          {% if appointment.appointment_date %}
+            {{ appointment.appointment_date.strftime('%Y-%m-%d %H:%M') }}
+          {% else %}
+            N/A
+          {% endif %}
+        </p>
+        {% if appointment.facility_location %}
+        <p class="card-text">
+          <strong><i class="fas fa-hospital"></i> Location:</strong>
+          <span class="facility-info" data-facility="{{ appointment.facility_location }}">{{ appointment.facility_location }}</span>
+          <div id="facility-map-single" class="mt-2" style="min-height:200px;"></div>
+        </p>
+        {% endif %}
+        <p class="card-text"><strong>Symptoms / Reason:</strong> {{ appointment.symptoms or '—' }}</p>
+        <p class="card-text"><strong>Status:</strong> {{ appointment.status or 'Scheduled' }}</p>
+        <div class="d-flex gap-2">
+          <a href="{{ url_for('book_appointment') }}" class="btn btn-primary btn-sm">Reschedule</a>
+          <!-- Implement a cancel route if available -->
+          <a href="{{ url_for('appointments') }}" class="btn btn-outline-secondary btn-sm">Back to list</a>
+        </div>
+      </div>
+    </div>
+
+  {# If a list of appointments is provided #}
+  {% elif appointments %}
+    {% if appointments|length > 0 %}
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>Doctor / Dept</th>
+              <th>Location</th>
+              <th>Date & Time</th>
+              <th>Symptoms</th>
+              <th>Status</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appt in appointments %}
+            <tr>
+              <td>{{ appt.doctor_name }}</td>
+              <td>
+                {% if appt.facility_location %}
+                  <i class="fas fa-hospital me-1"></i>
+                  <span class="facility-info" data-facility="{{ appt.facility_location }}">{{ appt.facility_location }}</span>
+                {% else %}
+                  <span class="text-muted">—</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if appt.appointment_date %}
+                  {{ appt.appointment_date.strftime('%Y-%m-%d %H:%M') }}
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>{{ appt.symptoms or '—' }}</td>
+              <td>{{ appt.status or 'Scheduled' }}</td>
+              <td class="text-end">
+                <a href="{{ url_for('book_appointment') }}" class="btn btn-sm btn-outline-primary">View / Reschedule</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <div class="alert alert-info">
+        No appointments found. <a href="{{ url_for('book_appointment') }}">Book an appointment</a>.
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="alert alert-secondary">
+      No appointment data available.
+    </div>
+  {% endif %}
+</div>
+ 
+<div id="maps-config" data-google-api-key="{{ google_api_key|e }}" data-use-google-maps="{{ '1' if use_google_maps else '0' }}" style="display:none"></div>
+<!-- Leaflet CSS/JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Read maps config from DOM to avoid inline Jinja inside JS
+  const cfgEl = document.getElementById('maps-config');
+  const googleApiKey = cfgEl ? cfgEl.getAttribute('data-google-api-key') : '';
+  const useGoogleMaps = cfgEl ? cfgEl.getAttribute('data-use-google-maps') === '1' : false;
+  const facilityData = {
+    'City Health Clinic - Downtown': {
+      address: '123 Main Street, Downtown',
+      lat: 37.7740,
+      lng: -122.4190,
+      place_id: '',
+      phone: '(555) 123-4567',
+      hours: 'Mon-Fri: 8AM-6PM, Sat: 9AM-2PM'
+    },
+    'General Hospital - Central': {
+      address: '456 Hospital Drive, Central',
+      lat: 37.7749,
+      lng: -122.4194,
+      place_id: '',
+      phone: '(555) 234-5678',
+      hours: '24/7'
+    },
+    'Medical Center - North': {
+      address: '789 Health Avenue, North',
+      lat: 40.7128,
+      lng: -74.0060,
+      place_id: '',
+      phone: '(555) 345-6789',
+      hours: 'Mon-Fri: 9AM-5PM, Sat: 10AM-1PM'
+    },
+    'Urgent Care - East': {
+      address: '321 Quick Lane, East',
+      lat: 37.7760,
+      lng: -122.4170,
+      place_id: '',
+      phone: '(555) 456-7890',
+      hours: 'Daily: 8AM-10PM'
+    },
+    'Specialist Clinic - West': {
+      address: '654 Expert Street, West',
+      lat: 37.7700,
+      lng: -122.4300,
+      place_id: '',
+      phone: '(555) 567-8901',
+      hours: 'Mon-Fri: 10AM-6PM by appointment'
+    },
+    'Pediatric Center - South': {
+      address: '987 Kids Way, South',
+      lat: 37.7600,
+      lng: -122.4200,
+      place_id: '',
+      phone: '(555) 678-9012',
+      hours: 'Mon-Fri: 9AM-5PM, Sat: 9AM-12PM'
+    }
+  };
+
+  document.querySelectorAll('.facility-info').forEach(function(el) {
+    const displayed = el.getAttribute('data-facility') || el.textContent || '';
+    const info = facilityData[displayed];
+    if (!info) return;
+
+    const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(info.address || displayed);
+    el.innerHTML = `
+      <strong>${displayed}</strong><br>
+      <small class="text-muted">${info.address}</small><br>
+      <small><i class="fas fa-phone"></i> ${info.phone}</small>
+      <div class="mt-1"><a href="${mapUrl}" target="_blank" class="btn btn-sm btn-outline-primary">View on map</a></div>
+    `;
+  });
+
+  // If this page is showing a single appointment, render an interactive Leaflet map
+  const singleMap = document.getElementById('facility-map-single');
+  if (singleMap) {
+    // init map
+    var mapSingle = L.map('facility-map-single', {zoomControl:true, scrollWheelZoom:false}).setView([0,0],2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom:19, attribution:'&copy; OpenStreetMap contributors'}).addTo(mapSingle);
+    const el = document.querySelector('.facility-info[data-facility]');
+    if (el) {
+      const displayed = el.getAttribute('data-facility') || el.textContent || '';
+      const info = facilityData[displayed];
+      if (info && info.lat && info.lng) {
+        const m = L.marker([info.lat, info.lng]).addTo(mapSingle);
+        m.bindPopup(`<strong>${info.name || displayed}</strong><br>${info.address || ''}`).openPopup();
+        mapSingle.setView([info.lat, info.lng], 14);
+      } else if (info && info.address) {
+        // no coords, center on a reasonable zoom and leave map
+        mapSingle.setView([0,0],2);
+      }
+      // try to show approximate user location via server fallback
+      fetch('/location_estimate').then(r=>r.json()).then(j=>{
+        if (j && j.lat && j.lng) {
+          var userMk = L.circleMarker([j.lat,j.lng], {radius:6, color:'#007bff', fillColor:'#007bff', fillOpacity:0.9}).addTo(mapSingle);
+          userMk.bindPopup('You (approx)').openPopup();
+        }
+      }).catch(()=>{});
+    }
+  }
+});
+</script>
+
+{% endblock %}

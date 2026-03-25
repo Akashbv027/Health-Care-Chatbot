@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Appointment{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-4">
+  <div class="col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h4 class="card-title mb-3">Book Appointment</h4>
+        <p class="text-muted small">Schedule an appointment with a doctor or department. We'll confirm availability.</p>
+
+        {% if error %}
+          <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+
+        <form method="post" action="{{ url_for('book_appointment') }}" novalidate>
+          <div class="mb-3">
+            <label for="department" class="form-label">Department</label>
+            <select id="department" name="department" class="form-select">
+              <option value="">Select department...</option>
+              <option value="general">General Practice</option>
+              <option value="cardiology">Cardiology</option>
+              <option value="dermatology">Dermatology</option>
+              <option value="pediatrics">Pediatrics</option>
+              <option value="ent">ENT</option>
+              <option value="orthopedics">Orthopedics</option>
+            </select>
+            <div class="form-text">Choose a department or type a preferred doctor below.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="facility" class="form-label">Hospital / Clinic Location</label>
+            <select id="facility" name="facility" class="form-select">
+              <option value="">Select a facility...</option>
+              {% if clinics %}
+                {% for c in clinics %}
+                  <option value="{{ c.id }}">{{ c.name }}{% if c.address %} - {{ c.address }}{% endif %} (—)</option>
+                {% endfor %}
+              {% else %}
+                <option value="">No facilities available</option>
+              {% endif %}
+            </select>
+            <div class="form-text">Choose a nearby facility or it will auto-detect based on your location.</div>
+          </div>
+
+          <div id="facility-details" class="alert alert-info d-none" role="alert">
+            <h6 class="alert-heading">Facility Information</h6>
+            <p id="facility-info-text" class="mb-0"></p>
+            <small id="facility-distance" class="d-block mt-1"></small>
+            <div id="facility-map" class="mt-3" style="min-height:200px;"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="doctor_name" class="form-label">Doctor (optional)</label>
+            <input type="text" class="form-control" id="doctor_name" name="doctor_name"
+                   value="{{ doctor_name|default('') }}" placeholder="e.g. Dr. A. Smith">
+          </div>
+
+          <div class="mb-3">
+            <label for="appointment_date" class="form-label">Appointment date & time</label>
+            <input type="datetime-local" class="form-control" id="appointment_date" name="appointment_date"
+                   value="{{ appointment_date|default('') }}" required>
+            <div class="form-text">Format: dd-mm-yyyy --:-- (browser date/time picker preferred)</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="symptoms" class="form-label">Symptoms / Reason (optional)</label>
+            <textarea class="form-control" id="symptoms" name="symptoms" rows="4" placeholder="Describe your reason for the visit">{{ symptoms|default('') }}</textarea>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Book Appointment</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="maps-config" data-google-api-key="{{ google_api_key|e }}" data-use-google-maps="{{ '1' if use_google_maps else '0' }}" style="display:none"></div>
+<script id="clinics-data" type="application/json">{% if clinics %}{{ clinics|tojson }}{% else %}[] {% endif %}</script>
+
+<script>
+  // Leaflet CSS/JS (CDN)
+</script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-sA+4gGkP6m2vQ7Yp6y9QYh6fT4fY0zjv+3hZ8a3gCkM=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-o9N1j8gq5G5s6QxkG1o3FQ4K5Z9qv0q5s2h5z5yDq3M=" crossorigin=""></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Read maps config from DOM to avoid inline Jinja inside JS
+  const cfgEl = document.getElementById('maps-config');
+  const googleApiKey = cfgEl ? cfgEl.getAttribute('data-google-api-key') : '';
+  const useGoogleMaps = cfgEl ? cfgEl.getAttribute('data-use-google-maps') === '1' : false;
+  const facilitySelect = document.getElementById('facility');
+  const facilityDetails = document.getElementById('facility-details');
+  const facilityInfoText = document.getElementById('facility-info-text');
+  const facilityDistance = document.getElementById('facility-distance');
+  const facilityMap = document.getElementById('facility-map');
+  
+  // Build facility data from server-provided `clinics` variable (read from JSON script tag)
+  let clinicsFromServer = [];
+  try {
+    const el = document.getElementById('clinics-data');
+    if (el && el.textContent) clinicsFromServer = JSON.parse(el.textContent);
+  } catch (e) { clinicsFromServer = []; }
+  const facilityData = {};
+  clinicsFromServer.forEach(function(c){
+    facilityData[c.id] = {
+      name: c.name,
+      address: c.address || '',
+      lat: c.lat || null,
+      lng: c.lng || null,
+      doctors: c.doctors || [],
+      distance: '—'
+    };
+  });
+  
+  // Handle facility selection
+  facilitySelect.addEventListener('change', function() {
+    const selectedFacility = this.value;
+    
+    if (!selectedFacility || !facilityData[selectedFacility]) {
+      facilityDetails.classList.add('d-none');
+      return;
+    }
+    
+    const facility = facilityData[selectedFacility];
+    const mapUrl = 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(facility.address || facility.name);
+    facilityInfoText.innerHTML = `
+      <strong>${facility.name}</strong> - ${facility.location}<br>
+      <i class="fas fa-map-marker-alt"></i> ${facility.address}<br>
+      <i class="fas fa-phone"></i> ${facility.phone}<br>
+      <i class="fas fa-clock"></i> ${facility.hours}<br>
+      <i class="fas fa-briefcase-medical"></i> ${facility.services}
+      <div class="mt-2"><a href="${mapUrl}" target="_blank" class="btn btn-sm btn-outline-primary">View on map</a></div>
+    `;
+    facilityDistance.textContent = `Distance: ${facility.distance}`;
+    
+    // Initialize or update the interactive Leaflet map
+    try {
+      if (typeof L !== 'undefined') {
+        ensureLeafletMap();
+        // Add or update facility markers
+        addFacilityMarkers();
+        // Center map on selected facility
+        if (facility.lat && facility.lng) {
+          map.setView([facility.lat, facility.lng], 14);
+          // Open popup for this facility marker
+          const key = selectedFacility;
+          if (facilityMarkers[key]) {
+            facilityMarkers[key].openPopup();
+          }
+        }
+      } else {
+        // Leaflet not loaded; leave facilityMap empty
+        facilityMap.innerHTML = '';
+      }
+    } catch (e) {
+      console.log('Leaflet map error', e);
+    }
+
+    facilityDetails.classList.remove('d-none');
+  });
+  
+  // Attempt to fetch nearby facilities on page load
+  // Haversine (meters)
+  function haversineMeters(lat1, lon1, lat2, lon2) {
+    function toRad(x){return x*Math.PI/180;}
+    var R = 6371000; // meters
+    var dLat = toRad(lat2-lat1);
+    var dLon = toRad(lon2-lon1);
+    var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+    var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+  }
+
+  function updateFacilityDistances(userLat, userLng) {
+    Object.keys(facilityData).forEach(function(key){
+      var f = facilityData[key];
+      if (f && f.lat && f.lng) {
+        var d = Math.round(haversineMeters(userLat, userLng, f.lat, f.lng));
+        f.distance = (d >= 1000) ? (Math.round(d/100)/10 + ' km') : (d + ' m');
+        // Update option display if present
+        var opt = document.querySelector('#facility option[value="' + key + '"]');
+        if (opt) {
+          // Keep the original label text (before parenthesis) if present
+          var base = f.name + ' - ' + f.location;
+          opt.textContent = base + ' (' + f.distance + ')';
+        }
+      }
+    });
+  }
+
+  function onGeoSuccess(position) {
+    const lat = position.coords.latitude;
+    const lng = position.coords.longitude;
+    console.log('User location (geolocation):', lat, lng);
+    updateFacilityDistances(lat, lng);
+    // Optionally choose the nearest facility in the select
+    try {
+      var nearest = null; var nearestKey = null;
+      Object.keys(facilityData).forEach(function(k){
+        var f = facilityData[k];
+        if (f && f.lat && f.lng && f.distance) {
+          var meters = (typeof f.distance === 'string' && f.distance.indexOf(' km')>-1) ? parseFloat(f.distance)*1000 : parseInt(f.distance);
+          if (isNaN(meters)) meters = 9999999;
+          if (nearest === null || meters < nearest) { nearest = meters; nearestKey = k; }
+        }
+      });
+      if (nearestKey) {
+        facilitySelect.value = nearestKey;
+        facilitySelect.dispatchEvent(new Event('change'));
+      }
+    } catch(e){ console.log('nearest select error', e); }
+  }
+
+  function onGeoError(err) {
+    console.log('Geolocation failed, trying IP-based fallback', err && err.message);
+    // Try server-side location estimate
+    fetch('/location_estimate').then(function(resp){
+      if (!resp.ok) throw new Error('location_estimate failed');
+      return resp.json();
+    }).then(function(j){
+      if (j && j.lat && j.lng) {
+        console.log('User location (ip estimate):', j.lat, j.lng);
+        updateFacilityDistances(j.lat, j.lng);
+      }
+    }).catch(function(e){
+      console.log('IP fallback failed or unavailable', e);
+    });
+  }
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(onGeoSuccess, onGeoError, {enableHighAccuracy:true, timeout:8000, maximumAge:60000});
+  } else {
+    // No geolocation API — try server fallback
+    onGeoError({message:'geolocation_unavailable'});
+  }
+
+  // --- Leaflet map helpers ---
+  var map = null;
+  var facilityMarkers = {};
+  var userMarker = null;
+  function ensureLeafletMap() {
+    if (map) return;
+    // default view: use first facility or world
+    var initial = [0,0];
+    var found = Object.keys(facilityData).find(k => facilityData[k] && facilityData[k].lat && facilityData[k].lng);
+    if (found) initial = [facilityData[found].lat, facilityData[found].lng];
+    map = L.map('facility-map', {zoomControl:true, scrollWheelZoom:false}).setView(initial, found ? 12 : 2);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+  }
+
+  function iconForUser(){
+    return L.icon({
+      iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      iconSize: [25,41], iconAnchor:[12,41], popupAnchor:[1,-34]
+    });
+  }
+
+  function addFacilityMarkers(){
+    if (!map) ensureLeafletMap();
+    // clear previous markers (but keep userMarker)
+    Object.keys(facilityMarkers).forEach(function(k){
+      try{ map.removeLayer(facilityMarkers[k]); }catch(e){}
+    });
+    facilityMarkers = {};
+    Object.keys(facilityData).forEach(function(k){
+      var f = facilityData[k];
+      if (!f || !f.lat || !f.lng) return;
+      var m = L.marker([f.lat, f.lng]).addTo(map);
+      var popup = `<strong>${f.name}</strong><br>${f.address || ''}<br><small>${f.phone || ''}</small>`;
+      m.bindPopup(popup);
+      facilityMarkers[k] = m;
+    });
+    // re-add user marker on top
+    if (userMarker) userMarker.addTo(map);
+  }
+
+  function setUserMarker(lat, lng){
+    if (!map) ensureLeafletMap();
+    if (userMarker) {
+      userMarker.setLatLng([lat,lng]);
+    } else {
+      userMarker = L.circleMarker([lat,lng], {radius:7, color:'#007bff', fillColor:'#007bff', fillOpacity:0.9}).addTo(map);
+      userMarker.bindPopup('You are here');
+    }
+    // ensure user marker visible
+    try{ map.fitBounds(L.featureGroup([userMarker].concat(Object.values(facilityMarkers))).getBounds().pad(0.5)); }catch(e){}
+  }
+});
+</script>
+{% endblock %}

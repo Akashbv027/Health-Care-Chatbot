@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+
+{% block title %}Emergency Services{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2 class="text-danger">Emergency Services</h2>
+  <p>If you're experiencing a life-threatening emergency, call your local emergency number immediately.</p>
+
+  <div class="card mb-3">
+    <div class="card-body">
+      <h5 class="card-title">Quick Emergency Alert</h5>
+      <p class="card-text">Press the button below to send an emergency alert to your contacts (simulated).</p>
+      <div class="d-flex gap-2">
+        <button id="alertBtn" class="btn btn-danger">Send Emergency Alert</button>
+        <a id="call108" href="tel:108" class="btn btn-outline-danger">Call Emergency 108</a>
+      </div>
+      <div id="alertResult" class="mt-3"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h5 class="card-title">Emergency Contacts</h5>
+      <p class="card-text">You can add or manage emergency contacts in your profile. Make sure your phone number is up to date.</p>
+      <ul>
+        <li>Local emergency number: 911 (or your region's number)</li>
+        <li>Poison control: 1-800-222-1222 (US)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script>
+document.getElementById('alertBtn').addEventListener('click', async function () {
+  const resultEl = document.getElementById('alertResult');
+  resultEl.textContent = 'Sending alert...';
+  try {
+    const res = await fetch('/send_emergency_alert', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+    const data = await res.json();
+    resultEl.textContent = JSON.stringify(data);
+  } catch (err) {
+    resultEl.textContent = 'Failed to send alert: ' + err;
+  }
+});
+
+// If the page is opened with ?emergency=1 or #emergency, prompt to call 108 immediately
+(function(){
+  try{
+    const params = new URLSearchParams(window.location.search);
+    const auto = params.get('emergency') || (window.location.hash && window.location.hash.indexOf('emergency')>=0);
+    if (auto && (auto === '1' || auto === 'true' || auto === true)){
+      // show a confirm that this will place a call to 108
+      setTimeout(() => {
+        if (confirm('This page indicates an emergency. Call emergency number 108 now?')){
+          // navigate to tel:108 — on mobile this launches the dialer
+          window.location.href = 'tel:108';
+        }
+      }, 300);
+    }
+  }catch(e){/* ignore */}
+})();
+</script>
+
+{% endblock %}

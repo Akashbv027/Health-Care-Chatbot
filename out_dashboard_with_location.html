@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HealthCare Chatbot</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    .health-header { 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+    }
+    .feature-card { 
+      transition: transform 0.3s; 
+    }
+    .feature-card:hover { 
+      transform: translateY(-5px); 
+    }
+    .emergency-btn { 
+      background: linear-gradient(45deg, #ff416c, #ff4b2b); 
+      border: none;
+      color: white;
+    }
+    .emergency-btn:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark health-header">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <i class="fas fa-heartbeat me-2"></i>
+        HealthCare AI
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ms-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/dashboard">Dashboard</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/appointments">Appointments</a>
+          </li>
+          
+          <li class="nav-item">
+            <a class="nav-link" href="/login">Login</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/register">Register</a>
+          </li>
+          
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <main class="container my-5">
+    
+<div class="row">
+  <div class="col-12">
+    <h2>Welcome, testuser_loc!</h2>
+    <p class="text-muted">Your Health Dashboard</p>
+    <div id="location-permission-banner" class="alert alert-info mt-2" style="display:none;">
+      <strong>Allow location access?</strong>
+      <span class="ms-2">To show nearby clinics and doctors we need your location.</span>
+      <div class="mt-2">
+        <button class="btn btn-sm btn-primary" onclick="requestLocationPermission()">Allow Location</button>
+        <button class="btn btn-sm btn-secondary ms-2" onclick="useManualLocation()">Enter Manually</button>
+        <button class="btn btn-sm btn-info ms-2" onclick="useApproximateLocation()">Use Approximate Location</button>
+        <button class="btn btn-sm btn-link ms-2" onclick="dismissLocationBanner()">Dismiss</button>
+      </div>
+    </div>
+    <!-- Summary shown after permission granted -->
+    <div id="user-location-summary" class="alert alert-success mt-2" style="display:none;">
+      <strong>Location:</strong> <span id="summary-coords">n/a</span>
+      <div class="mt-1"><small id="summary-ts">Last: n/a</small></div>
+    </div>
+  </div>
+</div>
+
+
+<div class="row g-4 mt-2">
+  <!-- Quick Actions -->
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fas fa-stethoscope fa-2x text-primary mb-3"></i>
+        <h6>Symptom Checker</h6>
+        <a href="/symptom_checker" class="btn btn-primary btn-sm mt-2">Check Now</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fas fa-calendar-plus fa-2x text-success mb-3"></i>
+        <h6>Book Appointment</h6>
+        <a href="/book_appointment" class="btn btn-success btn-sm mt-2">Book Now</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fas fa-bell fa-2x text-warning mb-3"></i>
+        <h6>Medication Reminders</h6>
+        <a href="/medication_reminders" class="btn btn-warning btn-sm mt-2">Manage</a>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fas fa-ambulance fa-2x text-danger mb-3"></i>
+        <h6>Emergency</h6>
+        <a href="/emergency_services" class="btn btn-danger btn-sm mt-2">Help</a>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card">
+      <div class="card-body text-center">
+        <i class="fas fa-prescription-bottle fa-2x text-secondary mb-3"></i>
+        <h6>Prescriptions</h6>
+        <a href="/generated_prescriptions" class="btn btn-secondary btn-sm mt-2">My Prescriptions</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Upcoming Appointments -->
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card">
+<!-- Location & Nearby Facilities -->
+<div class="row mt-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header">
+        <h5>Nearby Healthcare Map</h5>
+      </div>
+      <div class="card-body">
+        <div id="map" style="height:400px; width:100%;"></div>
+        <div class="mt-2">
+          <button id="tracking-btn" class="btn btn-sm btn-outline-primary" onclick="toggleLiveTracking()">Start Live Tracking</button>
+          <span id="tracking-status" class="ms-2 text-muted">Tracking: off</span>
+          <span id="coords-display" class="ms-3 text-muted">Coords: n/a</span>
+          <button id="copy-coords" class="btn btn-sm btn-outline-secondary ms-2" onclick="copyCoords()" title="Copy coordinates">Copy</button>
+          <span id="last-updated" class="ms-3 text-muted">Last: n/a</span>
+          <button id="send-location-now" class="btn btn-sm btn-outline-success ms-2" onclick="sendLocationNow()" title="Send current location to server">Send Now</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header"><strong>Nearby Facilities</strong></div>
+      <div class="card-body" id="facilities-list">Loading nearby facilities...</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><strong>Doctors Nearby</strong></div>
+      <div class="card-body" id="doctors-list">Loading doctors...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Prescriptions -->
+<div class="row mt-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5>Upload Prescription</h5></div>
+      <div class="card-body">
+        <form id="pres-form">
+          <div class="mb-3">
+            <label for="prescription" class="form-label">Select prescription file (image/pdf)</label>
+            <input class="form-control" type="file" id="prescription" name="prescription">
+          </div>
+          <button type="button" class="btn btn-primary" onclick="uploadPrescription()">Upload</button>
+        </form>
+        <div id="pres-upload-result" class="mt-3"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5>Medication Reminders</h5></div>
+      <div class="card-body">
+        <div id="reminders-list">Loading reminders...</div>
+        <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadReminders()">Refresh</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+      <div class="card-header">
+        <h5>Upcoming Appointments</h5>
+      </div>
+      <div class="card-body">
+        
+          <p class="text-muted">No upcoming appointments</p>
+        
+        <a href="/appointments" class="btn btn-outline-primary btn-sm">View All</a>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Active Reminders -->
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header">
+        <h5>Medication Reminders</h5>
+      </div>
+      <div class="card-body">
+        
+          <p class="text-muted">No active reminders</p>
+        
+        <a href="/medication_reminders" class="btn btn-outline-warning btn-sm">Manage</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Health Chatbot -->
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <h5>Health Assistant Chat</h5>
+      </div>
+      <div class="card-body">
+        <div id="chat-container" style="height: 300px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; margin-bottom: 10px;">
+          <div class="alert alert-info">Hello! I'm your health assistant. How can I help you today?</div>
+        </div>
+        <!-- Include the canonical chatbot reply text and keep it hidden for client-side rendering -->
+        <textarea id="chatbot-reply-text" style="display:none;">====================================================================
+HEALTHCARE CHATBOT : SYMPTOM-BASED MEDICAL GUIDANCE SYSTEM
+====================================================================
+
+DISCLAIMER:
+This chatbot provides general health information only.
+It does NOT replace consultation with a doctor.
+Do NOT take antibiotics, steroids, blood thinners, or cancer medicines
+without a doctor's prescription.
+
+====================================================================
+REPORTED / COMMON SYMPTOMS SUPPORTED
+====================================================================
+
+Fever, cough (dry/wet), cold, sore throat, headache, body pain,
+muscle pain, weakness, dizziness, breathlessness, chest pain,
+stomach pain, nausea, vomiting, diarrhea, skin rash, swelling,
+urinary pain, mental stress, fatigue.
+
+====================================================================
+SYMPTOM-BASED MEDICINE & CARE GUIDANCE
+====================================================================
+
+--------------------------------------------------
+1) FEVER / BODY PAIN / HEADACHE
+--------------------------------------------------
+Possible cause:
+- Viral infection, dehydration, seasonal illness
+
+Medicine:
+- Paracetamol 500–650 mg
+Dosage:
+- 1 tablet every 6–8 hours (ONLY if fever/pain present)
+Maximum:
+- Do NOT exceed 3000 mg in 24 hours
+Duration:
+- 2 to 3 days only
+
+Home care:
+- Rest well
+- Drink warm water
+- Lukewarm sponging for high fever
+
+Consult doctor if:
+- Fever lasts more than 3 days
+- Fever returns repeatedly
+- Fever is above 103°F
+
+--------------------------------------------------
+2) COUGH / SORE THROAT / COLD
+--------------------------------------------------
+Possible cause:
+- Viral upper respiratory infection
+
+Medicine:
+- Dry cough → Dextromethorphan syrup
+- Wet cough → Guaifenesin expectorant
+
+Dosage:
+- 5–10 ml, 2 to 3 times daily
+Duration:
+- 3 to 5 days
+
+Sore throat care:
+- Warm saltwater gargling (2–3 times/day)
+- Warm fluids, avoid cold drinks
+
+Consult doctor if:
+- Cough lasts more than 7 days
+- Blood in cough
+- Severe breathlessness
+
+--------------------------------------------------
+3) BREATHLESSNESS / CHEST TIGHTNESS (MILD)
+--------------------------------------------------
+Possible cause:
+- Anxiety, infection, asthma history
+
+Immediate steps:
+- Sit upright
+- Slow deep breathing
+- Avoid exertion
+
+IMPORTANT:
+- NO self-medication
+
+EMERGENCY if:
+- Breathlessness at rest
+- Blue lips/fingertips
+- Chest pain with sweating
+
+--------------------------------------------------
+4) CHEST PAIN (CRITICAL SYMPTOM)
+--------------------------------------------------
+Possible serious causes:
+- Heart attack
+- Blood clot
+- Severe infection
+
+WARNING SIGNS (CALL EMERGENCY IMMEDIATELY):
+- Crushing or pressure-like chest pain
+- Pain spreading to left arm/jaw/back
+- Sweating, nausea, dizziness
+- Sudden breathlessness
+
+ACTION:
+- Go to nearest emergency hospital immediately
+
+--------------------------------------------------
+5) STOMACH PAIN / VOMITING / DIARRHEA
+--------------------------------------------------
+Possible cause:
+- Food infection, viral gastroenteritis
+
+Care:
+- ORS solution after loose stools
+- Light food (rice, curd, banana)
+- Avoid oily/spicy food
+
+Medicine:
+- ORS only (NO antibiotics without doctor)
+
+Consult doctor if:
+- Vomiting lasts >24 hours
+- Blood in vomit or stool
+- Severe abdominal pain
+
+--------------------------------------------------
+6) DIZZINESS / WEAKNESS
+--------------------------------------------------
+Possible cause:
+- Low BP, dehydration, stress
+
+Care:
+- Sit or lie down
+- Drink fluids
+- Avoid sudden standing
+
+Consult doctor if:
+- Repeated fainting
+- One-sided weakness
+- Speech difficulty
+
+--------------------------------------------------
+7) SKIN RASH / SWELLING
+--------------------------------------------------
+Possible cause:
+- Allergy, infection
+
+Care:
+- Keep area clean and dry
+- Avoid scratching
+
+Medicine:
+- Antihistamine ONLY if advised
+
+EMERGENCY if:
+- Facial or throat swelling
+- Difficulty breathing
+- Rapidly spreading rash
+
+--------------------------------------------------
+8) URINARY PAIN / BURNING
+--------------------------------------------------
+Possible cause:
+- Urinary infection or dehydration
+
+Care:
+- Drink plenty of water
+- Do NOT hold urine
+
+Consult doctor if:
+- Blood in urine
+- Fever with urinary pain
+- Symptoms >2 days
+
+--------------------------------------------------
+9) MENTAL STRESS / ANXIETY
+--------------------------------------------------
+Possible cause:
+- Overwork, illness stress
+
+Care:
+- Proper sleep
+- Breathing exercises
+- Reduce screen time
+- Talk to someone trusted
+
+Consult doctor if:
+- Panic attacks
+- Depression lasting >2 weeks
+- Thoughts of self-harm
+
+====================================================================
+LONG-DURATION SYMPTOMS RULE (7 DAYS ALERT)
+====================================================================
+
+ANY symptom lasting more than 7 days requires medical evaluation:
+- Persistent fever
+- Continuous cough
+- Long-term fatigue
+- Chronic pain
+- Recurrent swelling
+
+These may indicate:
+- Bacterial infection
+- Chronic illness
+- Hormonal disorder
+- Serious disease
+
+====================================================================
+SERIOUS RED-FLAG CONDITIONS (DO NOT IGNORE)
+====================================================================
+
+BLOOD CLOT WARNING:
+- Sudden chest pain
+- One leg swelling/pain
+- Sudden breathlessness
+
+CANCER WARNING:
+- Unexplained weight loss
+- Persistent lump or swelling
+- Blood in urine, cough, or stool
+- Symptoms lasting weeks/months
+
+HEART ATTACK WARNING:
+- Severe chest pressure
+- Left arm/jaw pain
+- Sweating + nausea
+
+STROKE WARNING:
+- One-sided weakness
+- Slurred speech
+- Facial drooping
+
+ACTION:
+- Seek emergency medical care immediately
+
+====================================================================
+FINAL SAFETY MESSAGE
+====================================================================
+
+This chatbot provides INITIAL guidance only.
+Never ignore worsening symptoms.
+Never self-medicate with strong drugs.
+Always consult a qualified doctor when in doubt.
+
+====================================================================
+END OF HEALTHCARE CHATBOT RESPONSE
+====================================================================</textarea>
+        <div class="input-group">
+          <input type="text" id="chat-input" class="form-control" placeholder="Type your health concern...">
+          <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+        </div>
+        <div class="mt-2">
+          <button class="btn btn-outline-secondary btn-sm" onclick="startVoiceInput()">
+            <i class="fas fa-microphone"></i> Voice Input
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </main>
+
+  <footer class="bg-dark text-white text-center py-4 mt-5">
+    <div class="container">
+      <p class="mb-0">&copy; 2024 HealthCare AI. All rights reserved.</p>
+      <p class="mb-0 text-muted small">For emergencies, call 911 or your local emergency services</p>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.3/dist/leaflet.js"></script>
+
+<div id="server-config" data-use-google="0" data-google-api-key="" style="display:none"></div>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js"></script>
+<script>
+// --- Chat styles for Gemini-formatted replies ---
+const _chatStyles = document.createElement('style');
+_chatStyles.innerHTML = `
+.assistant-frame { border-left: 4px solid #0d6efd; background: #f8f9fa; padding: 12px; border-radius: 6px; margin-bottom: 10px; }
+.assistant-frame .meta { font-size: 0.85rem; color: #6c757d; margin-bottom: 6px; }
+.assistant-frame .body { white-space: pre-wrap; font-size: 0.95rem; color: #212529; }
+.assistant-frame a { color: #0d6efd; text-decoration: underline; }
+`;
+document.head.appendChild(_chatStyles);
+
+// --- Helper: Search chatbot_reply.txt for matching symptom section ---
+function searchSymptomGuidance(symptomKeyword) {
+  const cannedEl = document.getElementById('chatbot-reply-text');
+  const cannedText = cannedEl ? cannedEl.value : '';
+  if (!cannedText) return null;
+
+  // Split by common symptom section delimiters (lines with dashes)
+  const sections = cannedText.split(/^--+\s*/m);
+  const symptomLower = symptomKeyword.toLowerCase().trim();
+  
+  for (let section of sections) {
+    const sectionLower = section.toLowerCase();
+    // Match symptom keyword in section title (first few lines)
+    const titleLines = section.split('\n').slice(0, 5).join('\n').toLowerCase();
+    if (titleLines.includes(symptomLower)) {
+      // Found matching section; return it trimmed
+      return section.trim();
+    }
+  }
+  return null;
+}
+// --- Chat helper + guided profile flow ---
+let chatState = 'init';
+const userProfile = { name: null, age: null, gender: null, surgeries: null, other: null };
+
+function createAssistantBubble(metaText, bodyHtml) {
+  const el = document.createElement('div');
+  el.className = 'assistant-frame';
+  const meta = document.createElement('div'); meta.className = 'meta'; meta.textContent = metaText;
+  const body = document.createElement('div'); body.className = 'body';
+  body.innerHTML = bodyHtml;
+  el.appendChild(meta);
+  el.appendChild(body);
+  return el;
+}
+
+function startProfileFlow(){
+  try{
+    const chatContainer = document.getElementById('chat-container');
+    chatState = 'awaiting_surgeries';
+    const ask = 'Before we proceed, do you have any history of surgery? Please answer yes/no. If yes, we will ask which surgery.';
+    chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml(ask)));
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }catch(e){ console.error(e); }
+}
+
+function extractPrescription(section){
+  if (!section) return [];
+  const lines = section.split('\n');
+  const meds = [];
+  let inMedicine = false;
+  for (let i=0;i<lines.length;i++){
+    const l = lines[i].trim();
+    if (/^medicine[:\-\s]/i.test(l)) { inMedicine = true; continue; }
+    if (inMedicine){
+      if (/^dosage[:]/i.test(l) || /^duration[:]/i.test(l) || /^possible cause[:]/i.test(l) || l==='') { inMedicine = false; continue; }
+      if (/^[-–—]\s*/.test(l)) meds.push(l.replace(/^[-–—]\s*/, ''));
+      else if (l) meds.push(l);
+    }
+  }
+  // fallback: capture lines with mg/tablet/syrup keywords
+  if (meds.length===0){
+    for (const l of lines){
+      if (/mg|tablet|syrup|dose|tablet|once daily|twice daily|dextromethorphan|paracetamol|guaifenesin|loratadine/i.test(l)){
+        const s = l.trim();
+        if (s.startsWith('-')) meds.push(s.replace(/^-\s*/, '')); else meds.push(s);
+      }
+    }
+  }
+  return meds;
+}
+
+// Format a guidance text block into structured HTML with headings and lists
+function formatGuidanceToHtml(section){
+  if (!section) return '';
+  const lines = section.split('\n');
+  let html = '';
+  let i = 0;
+  while(i < lines.length){
+    const line = lines[i].trim();
+    if (!line){ i++; continue; }
+    // Heading lines ending with ':'
+    if (/^([A-Za-z\s\/\-]+):$/.test(line)){
+      const heading = line.replace(/:$/,'');
+      html += `<div class="mb-2"><strong>${escapeHtml(heading)}:</strong>`;
+      // collect following list items
+      let j = i+1;
+      const items = [];
+      while(j < lines.length){
+        const l = lines[j].trim();
+        if (!l) { j++; continue; }
+        if (/^[-–—]\s*/.test(l)){
+          items.push(l.replace(/^[-–—]\s*/,'').trim()); j++; continue;
+        }
+        // stop collecting when next heading encountered
+        if (/^([A-Za-z\s\/\-]+):$/.test(l)) break;
+        // also accept plain text lines (single-line content)
+        items.push(l); j++;
+      }
+      if (items.length){
+        html += '<ul class="mb-2">' + items.map(it => `<li>${escapeHtml(it)}</li>`).join('') + '</ul>';
+      }
+      html += '</div>';
+      i = j; continue;
+    }
+    // If not a heading, just append as paragraph
+    html += `<p>${escapeHtml(line)}</p>`;
+    i++;
+  }
+  return html;
+}
+
+function promptNextProfileQuestion(state, reply){
+  const chatContainer = document.getElementById('chat-container');
+  if (state === 'awaiting_surgeries'){
+    // If user answered yes/ya, ask for specific surgery details
+    const low = (reply||'').toLowerCase();
+    if (low === 'yes' || low === 'y' || low.includes('yes')){
+      chatState = 'awaiting_surgery_details';
+      chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml('Please list the surgery or surgeries you have had (e.g., appendectomy, hip replacement).')));
+    } else {
+      userProfile.surgeries = reply;
+      chatState = 'awaiting_name';
+      chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml('Thank you. What is your full name?')));
+    }
+  } else if (state === 'awaiting_name'){
+    userProfile.name = reply;
+    chatState = 'awaiting_age';
+    chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml('Got it. How old are you?')));
+  } else if (state === 'awaiting_age'){
+    userProfile.age = reply;
+    chatState = 'awaiting_gender';
+    chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml('Thanks. What is your gender? (Male/Female/Other)')));
+  } else if (state === 'awaiting_gender'){
+    userProfile.gender = reply;
+    chatState = 'awaiting_other';
+    chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml('Any other medical details (allergies, medications)? If none, type "none".')));
+  } else if (state === 'awaiting_surgery_details'){
+    userProfile.surgeries = reply;
+    chatState = 'awaiting_name';
+    chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml('Thank you. What is your full name?')));
+  } else if (state === 'awaiting_other'){
+    userProfile.other = reply;
+    chatState = 'ready_for_symptoms';
+    chatContainer.appendChild(createAssistantBubble('Assistant (Healthcare):', escapeHtml('Thank you. Please describe your current symptoms now.')));
+  }
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+// Enhanced sendMessage to manage profile flow and then show guidance + prescription
+function sendMessage(){
+  const input = document.getElementById('chat-input');
+  const msg = input.value.trim();
+  if (!msg) return;
+  const chatContainer = document.getElementById('chat-container');
+  const userEl = document.createElement('div'); userEl.className='text-end mb-2';
+  const userBadge = document.createElement('span'); userBadge.className='badge bg-primary'; userBadge.textContent = 'You: ' + msg; userEl.appendChild(userBadge); chatContainer.appendChild(userEl);
+  input.value = '';
+
+  // If still in profile collection states, handle sequentially
+  if (chatState !== 'ready_for_symptoms' && chatState !== 'init'){
+    promptNextProfileQuestion(chatState, msg);
+    return;
+  }
+
+  // If state is init, start the profile flow and ignore this input (treat as wake)
+  if (chatState === 'init'){
+    startProfileFlow();
+    return;
+
+  // Wrap updateUserMarker to also update the summary display and ensure tracking button reflects live tracking
+  function updateUserMarkerAndSummary(lat,lng,accuracy,source){ 
+    try{ 
+      updateUserMarker(lat,lng,accuracy,source); 
+      updateSummaryDisplay(lat,lng,Date.now()); 
+      if (document.getElementById('tracking-btn')) 
+        document.getElementById('tracking-btn').innerText = 'Stop Live Tracking'; 
+      trackingEnabled = true; 
+    }catch(e){ 
+      console.error(e); 
+    } 
+  }
+  }
+
+  // Now we are ready for symptoms: try to match guidance
+  const matched = searchSymptomGuidance(msg);
+  if (matched){
+    // Format the guidance into structured HTML (headings + lists)
+    let bodyHtml = formatGuidanceToHtml(matched);
+    // If markdown processor exists, prefer it for richer formatting on plain paragraphs
+    if ((typeof marked !== 'undefined') && bodyHtml.trim().length < 50){
+      bodyHtml = marked.parse(matched);
+    }
+    if (typeof DOMPurify !== 'undefined') bodyHtml = DOMPurify.sanitize(bodyHtml);
+    const assistEl = createAssistantBubble('Assistant (Healthcare Guidance):', bodyHtml);
+    chatContainer.appendChild(assistEl);
+
+    // Show collected user profile summary
+    const profileHtml = `<div><strong>Patient:</strong> ${escapeHtml(userProfile.name||'N/A')} &nbsp; <strong>Age:</strong> ${escapeHtml(userProfile.age||'N/A')} &nbsp; <strong>Gender:</strong> ${escapeHtml(userProfile.gender||'N/A')}</div><div><strong>Surgeries:</strong> ${escapeHtml(userProfile.surgeries||'N/A')}</div>`;
+    chatContainer.appendChild(createAssistantBubble('Assistant (Patient Info):', profileHtml));
+
+    // Extract prescription items and render
+    const meds = extractPrescription(matched);
+    if (meds && meds.length){
+      const presList = meds.map(m => `<li>${escapeHtml(m)}</li>`).join('');
+      const presHtml = `<div class="card mt-2"><div class="card-header"><strong>Prescription</strong></div><div class="card-body"><ul>${presList}</ul></div></div>`;
+      const presEl = document.createElement('div'); presEl.innerHTML = presHtml; chatContainer.appendChild(presEl);
+    }
+    // If matched guidance indicates a major disease or emergency keywords, show emergency alert option
+    const emergencyKeywords = ['cancer','heart','heart attack','stroke','chest pain','severe','critical','emergency'];
+    const lowerMatched = (matched||'').toLowerCase();
+    const foundEmergency = emergencyKeywords.some(k => lowerMatched.includes(k));
+    if (foundEmergency){
+      const emBtn = document.createElement('button');
+      emBtn.className = 'btn btn-danger mt-2';
+      emBtn.textContent = 'Send Emergency Alert / View Emergency Services';
+      emBtn.addEventListener('click', function(){ window.location.href = '/emergency_services'; });
+      const wrap = document.createElement('div'); wrap.className = 'mt-2'; wrap.appendChild(emBtn); chatContainer.appendChild(wrap);
+    }
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+    return;
+  }
+
+  // Fallback to server chatbot
+  fetch('/chatbot', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({message: msg}) })
+    .then(r=>r.json()).then(data=>{
+      const responseText = data.response || 'No guidance found. Please consult a healthcare professional.';
+      const assistEl = createAssistantBubble('Assistant (Gemini):', (typeof marked !== 'undefined') ? marked.parse(responseText) : escapeHtml(responseText).replace(/\n/g,'<br>'));
+      // detect actions
+      const actions = detectActions(data.response || responseText || '');
+      if (actions && actions.length){
+        const awrap = document.createElement('div'); awrap.className='assistant-actions';
+        actions.forEach(act=>{ const b=document.createElement('button'); b.className='btn btn-sm btn-outline-primary'; b.textContent=act.label||act.type; b.addEventListener('click', ()=>handleAction(act.type)); awrap.appendChild(b); });
+        assistEl.appendChild(awrap);
+      }
+      chatContainer.appendChild(assistEl);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }).catch(()=>{
+      const errEl = document.createElement('div'); errEl.className='text-start mb-2'; errEl.innerHTML = '<span class="badge bg-danger">Error: Could not reach server</span>'; chatContainer.appendChild(errEl);
+    });
+}
+
+// Start profile flow automatically on page load
+try{ window.addEventListener('load', function(){ setTimeout(()=>{ if (document.getElementById('chat-container')) startProfileFlow(); }, 600); }); }catch(e){}
+
+// Basic renderer: escape HTML, convert URLs to links, preserve line breaks and simple markdown-like bold/italic
+function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function detectActions(raw){
+  const acts = [];
+  if (!raw) return acts;
+  const lower = raw.toLowerCase();
+  // markdown-style action links: [Label](action:identifier)
+  try{
+    const re = /\[([^\]]+)\]\(action:([a-z0-9_\-]+)\)/ig;
+    let m;
+    while((m = re.exec(raw))){ acts.push({type: m[2], label: m[1]}); }
+  }catch(e){}
+  // keyword-based detection
+  if (lower.includes('book appointment') || lower.includes('book an appointment')) acts.push({type:'book_appointment', label:'Book appointment'});
+  if (lower.includes('nearby clinics') || lower.includes('nearby facilities') || lower.includes('show nearby')) acts.push({type:'show_nearby', label:'Show nearby clinics'});
+  if (lower.includes('find doctors') || lower.includes('doctors nearby')) acts.push({type:'find_doctors', label:'Find doctors nearby'});
+  if (lower.includes('emergency') || lower.includes('call emergency')) acts.push({type:'emergency_alert', label:'Send emergency alert'});
+  // dedupe by type
+  const seen = new Set();
+  return acts.filter(a=>{ if(seen.has(a.type)) return false; seen.add(a.type); return true; });
+}
+
+function handleAction(type){
+  try{
+    if (type === 'book_appointment' || type === 'book-appointment' || type === 'book_appointment'){
+      window.location.href = '/book_appointment';
+      return;
+    }
+    if (type === 'show_nearby' || type === 'show-nearby'){
+      if (userLat!=null && userLng!=null) { fetchFacilities(userLat,userLng); } else { useApproximateLocation(); }
+      return;
+    }
+    if (type === 'find_doctors' || type === 'find-doctors'){
+      if (userLat!=null && userLng!=null) { fetchDoctors(userLat,userLng); } else { useApproximateLocation(); }
+      return;
+    }
+    if (type === 'emergency_alert'){
+      // send emergency alert with last known location
+      const payload = { location: (userLat && userLng) ? `${userLat},${userLng}` : 'unknown' };
+      fetch('/send_emergency_alert', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)}).then(r=>r.json()).then(j=>{ alert('Emergency alert response: ' + (j.status||JSON.stringify(j))); }).catch(e=>{ alert('Failed to send emergency alert'); });
+      return;
+    }
+    // fallback: open as route if available
+    window.location.href = '/' + type.replace(/[^a-z0-9_\-]/gi,'');
+  }catch(e){ console.error('Action handler error', e); }
+}
+
+function startVoiceInput(){ alert('Voice input would be implemented with browser speech recognition API'); }
+document.getElementById('chat-input').addEventListener('keypress', function(e){ if (e.key === 'Enter') sendMessage(); });
+
+// --- Location and map ---
+let userLat=null, userLng=null, mapObj=null, userMarker=null, userAccuracyCircle=null, watchId=null, autoLocationInterval=null, trackingEnabled=false;
+let lastSentAt = null; // timestamp (ms) of last send to server
+let lastSentLatLng = null; // {lat,lng}
+const _cfgEl = document.getElementById('server-config');
+const USE_GOOGLE = (_cfgEl && _cfgEl.dataset && _cfgEl.dataset.useGoogle === '1');
+
+function initLocation(){
+  const banner = document.getElementById('location-permission-banner');
+  if (!navigator.geolocation) { document.getElementById('facilities-list').innerText='Geolocation not supported in this browser.'; return; }
+  banner.style.display='block';
+  try{ requestLocationPermission(); }catch(e){}
+}
+
+function dismissLocationBanner(){ document.getElementById('location-permission-banner').style.display='none'; document.getElementById('facilities-list').innerText='Location not provided.'; }
+
+function requestLocationPermission(){
+  document.getElementById('location-permission-banner').style.display='none';
+  if (!navigator.geolocation) { document.getElementById('facilities-list').innerText='Geolocation not supported in this browser.'; return; }
+  navigator.geolocation.getCurrentPosition(function(pos){
+    userLat=pos.coords.latitude; userLng=pos.coords.longitude;
+    initMap(userLat,userLng);
+    fetchFacilities(userLat,userLng);
+    fetchDoctors(userLat,userLng);
+    loadReminders();
+    // Update UI immediately to reflect granted permission and current location
+    setCoordsDisplay(userLat,userLng);
+    // show summary area with readable coords and timestamp
+    try{ document.getElementById('user-location-summary').style.display = 'block'; document.getElementById('summary-coords').innerText = `${userLat.toFixed(6)}, ${userLng.toFixed(6)}`; document.getElementById('summary-ts').innerText = 'Last: ' + (new Date()).toLocaleString(); }catch(e){}
+    try{ startLiveTracking(); }catch(e){}
+    try{ attemptSendLocation(userLat,userLng,'gps'); }catch(e){}
+  }, function(){
+    // Try approximate IP-based fallback and offer a retry button if it fails
+    useApproximateLocation();
+  }, {enableHighAccuracy:true, timeout:10000});
+}
+
+function useManualLocation(){ const latStr=prompt('Enter your latitude (e.g. 37.7749):'); const lngStr=prompt('Enter your longitude (e.g. -122.4194):'); const lat=parseFloat(latStr); const lng=parseFloat(lngStr); if (isNaN(lat)||isNaN(lng)){ alert('Invalid coordinates entered.'); return; } userLat=lat; userLng=lng; initMap(userLat,userLng); fetchFacilities(userLat,userLng); fetchDoctors(userLat,userLng); loadReminders(); setCoordsDisplay(userLat,userLng); try{ attemptSendLocation(userLat,userLng,'manual'); }catch(e){} }
+
+function useApproximateLocation(){
+  const listEl = document.getElementById('facilities-list');
+  if (listEl) listEl.innerText = 'Attempting to determine approximate location via your IP address...';
+  fetch('/location_estimate').then(r=>r.json()).then(j=>{
+    if (j && j.lat && j.lng){
+      userLat = parseFloat(j.lat); userLng = parseFloat(j.lng);
+      initMap(userLat,userLng);
+      fetchFacilities(userLat,userLng);
+      fetchDoctors(userLat,userLng);
+      loadReminders();
+      if (listEl) listEl.innerText = 'Using approximate location. Results may be imprecise.';
+      trackingEnabled = true; document.getElementById('tracking-status').innerText = 'Tracking: on (ip)';
+      if (autoLocationInterval) clearInterval(autoLocationInterval);
+      autoLocationInterval = setInterval(()=>{
+        fetch('/location_estimate').then(r=>r.json()).then(nj=>{ if (nj && nj.lat && nj.lng){ userLat=parseFloat(nj.lat); userLng=parseFloat(nj.lng); updateUserMarkerAndSummary(userLat,userLng,null,'ip'); setCoordsDisplay(userLat,userLng); fetchFacilities(userLat,userLng); fetchDoctors(userLat,userLng); } }).catch(()=>{});
+      }, 30000);
+      try{ attemptSendLocation(userLat,userLng,'ip'); }catch(e){}
+    } else {
+      if (listEl) listEl.innerHTML = 'Could not obtain approximate location via IP. <button class="btn btn-sm btn-outline-primary mt-2" onclick="useApproximateLocation()">Try again</button>';
+    }
+  }).catch(()=>{ if (listEl) listEl.innerHTML = 'Could not obtain approximate location via IP. <button class="btn btn-sm btn-outline-primary mt-2" onclick="useApproximateLocation()">Try again</button>'; });
+}
+
+function initMap(lat,lng){
+  if (USE_GOOGLE && typeof google !== 'undefined' && google.maps){ const center={lat:lat,lng:lng}; mapObj=new google.maps.Map(document.getElementById('map'),{center:center,zoom:13}); userMarker=new google.maps.Marker({position:center,map:mapObj,title:'You'}); mapObj.setCenter(center);
+  } else {
+    if (!mapObj) { mapObj = L.map('map').setView([lat,lng],13); L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(mapObj); }
+    if (!userMarker) userMarker = L.marker([lat,lng]).addTo(mapObj).bindPopup('You are here').openPopup();
+    if (!userAccuracyCircle) userAccuracyCircle = L.circle([lat,lng],{radius:50,color:'#3388ff',opacity:0.4}).addTo(mapObj);
+    mapObj.setView([lat,lng],13);
+  }
+}
+
+function updateUserMarker(lat,lng,accuracy,source){ if (!mapObj) return; const title = source?`You (${source})`:'You'; if (USE_GOOGLE && typeof google !== 'undefined' && google.maps){ const pos={lat:lat,lng:lng}; if (!userMarker) userMarker=new google.maps.Marker({position:pos,map:mapObj,title:title}); else { userMarker.setPosition(pos); userMarker.setTitle(title);} mapObj.setCenter(pos);} else { if (!userMarker) userMarker=L.marker([lat,lng]).addTo(mapObj).bindPopup(title); else { userMarker.setLatLng([lat,lng]); userMarker.getPopup().setContent(title);} if (userAccuracyCircle){ userAccuracyCircle.setLatLng([lat,lng]); if (accuracy) userAccuracyCircle.setRadius(accuracy);} else if (accuracy){ userAccuracyCircle=L.circle([lat,lng],{radius:accuracy,color:'#3388ff',opacity:0.4}).addTo(mapObj);} mapObj.panTo([lat,lng]); } document.getElementById('tracking-status').innerText=`Tracking: on (${source||'gps'})`; setCoordsDisplay(lat,lng); }
+
+// Try to send location to server, but throttle to avoid excessive requests.
+function distanceMeters(aLat,aLng,bLat,bLng){
+  if (aLat==null||aLng==null||bLat==null||bLng==null) return Infinity;
+  const toRad = Math.PI/180;
+  const R = 6371000;
+  const dLat = (bLat-aLat)*toRad; const dLon = (bLng-aLng)*toRad;
+  const la = aLat*toRad; const lb = bLat*toRad;
+  const hav = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(la)*Math.cos(lb)*Math.sin(dLon/2)*Math.sin(dLon/2);
+  const c = 2*Math.atan2(Math.sqrt(hav), Math.sqrt(1-hav));
+  return R*c;
+}
+
+function updateLastUpdatedDisplay(ts){
+  const el = document.getElementById('last-updated');
+  if (!el) return;
+  if (!ts) { el.innerText = 'Last: n/a'; return; }
+  const d = new Date(ts);
+  el.innerText = 'Last: ' + d.toLocaleString();
+}
+
+function saveLastToStorage(lat,lng,ts){
+  try{ localStorage.setItem('lastLocation', JSON.stringify({lat:lat,lng:lng,ts:ts})); }catch(e){}
+}
+
+function restoreLastFromStorage(){
+  try{
+    const s = localStorage.getItem('lastLocation');
+    if (!s) return;
+    const o = JSON.parse(s);
+    if (o && o.lat && o.lng) {
+      userLat = parseFloat(o.lat); userLng = parseFloat(o.lng);
+      initMap(userLat, userLng);
+      fetchFacilities(userLat, userLng);
+      fetchDoctors(userLat, userLng);
+      setCoordsDisplay(userLat, userLng);
+      updateLastUpdatedDisplay(o.ts);
+    }
+  }catch(e){}
+}
+
+function sendLocationToServer(lat,lng,source){
+  if (lat==null||lng==null) return Promise.resolve();
+  const payload = {latitude: lat, longitude: lng, source: source || 'client', timestamp: new Date().toISOString()};
+  return fetch('/api/location', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)})
+    .then(r=>r.json()).then(j=>{ lastSentAt = Date.now(); lastSentLatLng = {lat:lat,lng:lng}; updateLastUpdatedDisplay(lastSentAt); saveLastToStorage(lat,lng,lastSentAt); return j; }).catch(()=>{});
+}
+
+function attemptSendLocation(lat,lng,source){
+  const now = Date.now();
+  if (!lastSentAt) {
+    return sendLocationToServer(lat,lng,source);
+  }
+  const elapsed = now - lastSentAt;
+  const moved = lastSentLatLng ? distanceMeters(lastSentLatLng.lat,lastSentLatLng.lng,lat,lng) : Infinity;
+  if (elapsed > 15000 || moved > 10) { // send if >15s since last send or moved >10m
+    return sendLocationToServer(lat,lng,source);
+  }
+  return Promise.resolve();
+}
+
+function sendLocationNow(){
+  if (userLat==null||userLng==null){
+    if (!navigator.geolocation){ alert('No known coordinates to send and geolocation not available'); return; }
+    // try to obtain a fresh position and send it
+    navigator.geolocation.getCurrentPosition(function(pos){
+      userLat = pos.coords.latitude; userLng = pos.coords.longitude;
+      initMap(userLat,userLng); fetchFacilities(userLat,userLng); fetchDoctors(userLat,userLng); loadReminders(); setCoordsDisplay(userLat,userLng);
+      attemptSendLocation(userLat,userLng,'gps').then(()=>{ alert('Location obtained and sent'); }).catch(()=>{ alert('Location obtained but failed to send'); });
+    }, function(err){
+      const msg = (err && err.message) ? err.message : '';
+      // If the browser blocks geolocation because page is insecure, fall back to IP estimate
+      if (msg && msg.indexOf('Only secure origins are allowed') !== -1) {
+        document.getElementById('facilities-list').innerText = 'Geolocation blocked (insecure). Using approximate location via IP...';
+        fetch('/location_estimate').then(r=>r.json()).then(j=>{
+          if (j && j.lat && j.lng) {
+            userLat = parseFloat(j.lat); userLng = parseFloat(j.lng);
+            initMap(userLat,userLng); fetchFacilities(userLat,userLng); fetchDoctors(userLat,userLng); loadReminders();
+            attemptSendLocation(userLat,userLng,'ip').then(()=>{ alert('Used approximate IP location and sent to server'); }).catch(()=>{ alert('Used approximate IP location but failed to send'); });
+          } else {
+            alert('Could not obtain approximate location via IP.');
+          }
+        }).catch(()=>{ alert('Could not obtain approximate location via IP.'); });
+        return;
+      }
+      alert('Could not obtain location: ' + (msg || 'permission denied'));
+    }, {enableHighAccuracy:true, timeout:10000});
+    return;
+  }
+  sendLocationToServer(userLat,userLng,'manual').then(()=>{ alert('Location sent'); }).catch(()=>{ alert('Failed to send location'); });
+}
+
+function setCoordsDisplay(lat,lng){ const el=document.getElementById('coords-display'); if (!el) return; try{ el.innerText = `Coords: ${lat.toFixed(6)}, ${lng.toFixed(6)}`; }catch(e){ el.innerText='Coords: n/a'; } }
+
+// update the small summary element when marker updates
+function updateSummaryDisplay(lat,lng,ts){ try{ const s = document.getElementById('user-location-summary'); if (!s) return; s.style.display='block'; document.getElementById('summary-coords').innerText = `${lat.toFixed(6)}, ${lng.toFixed(6)}`; document.getElementById('summary-ts').innerText = 'Last: ' + (ts?new Date(ts).toLocaleString():new Date().toLocaleString()); }catch(e){} }
+
+function copyCoords(){ if (userLat==null || userLng==null){ alert('No coordinates to copy'); return; } const txt=`${userLat}, ${userLng}`; if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(txt).then(()=>{ alert('Coordinates copied'); }).catch(()=>{ prompt('Copy coordinates', txt); }); } else { prompt('Copy coordinates', txt); } }
+
+function clearUserMarker(){ if (!mapObj) return; if (USE_GOOGLE && typeof google !== 'undefined' && google.maps){ if (userMarker) { userMarker.setMap(null); userMarker=null; } } else { if (userMarker) { mapObj.removeLayer(userMarker); userMarker=null; } if (userAccuracyCircle) { mapObj.removeLayer(userAccuracyCircle); userAccuracyCircle=null; } } document.getElementById('tracking-status').innerText='Tracking: off'; }
+
+
+function startLiveTracking(){ if (!navigator.geolocation){ document.getElementById('facilities-list').innerText='Geolocation not supported in this browser.'; return; } if (watchId) return; watchId = navigator.geolocation.watchPosition(function(pos){ userLat=pos.coords.latitude; userLng=pos.coords.longitude; const accuracy=pos.coords.accuracy||50; updateUserMarkerAndSummary(userLat,userLng,accuracy,'gps'); try{ fetchFacilities(userLat,userLng); fetchDoctors(userLat,userLng); }catch(e){} }, function(){ document.getElementById('facilities-list').innerText='Location permission denied or unavailable.'; }, {enableHighAccuracy:true, maximumAge:5000, timeout:10000}); trackingEnabled=true; document.getElementById('tracking-btn').innerText='Stop Live Tracking'; }
+
+function stopLiveTracking(){ if (watchId && navigator.geolocation){ navigator.geolocation.clearWatch(watchId); watchId=null; } if (autoLocationInterval){ clearInterval(autoLocationInterval); autoLocationInterval=null; } trackingEnabled=false; document.getElementById('tracking-btn').innerText='Start Live Tracking'; clearUserMarker(); }
+
+function toggleLiveTracking(){ if (trackingEnabled) stopLiveTracking(); else startLiveTracking(); }
+
+function fetchFacilities(lat,lng){ fetch('/nearby_facilities',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:lat,lng:lng,radius:5000})}).then(r=>r.json()).then(data=>{ const list=document.getElementById('facilities-list'); list.innerHTML=''; (data.facilities||[]).slice(0,10).forEach(f=>{ const el=document.createElement('div'); el.className='mb-2'; el.innerHTML=`<strong>${f.name}</strong><br><small>${f.address||''}</small><br><small>Distance: ${f.distance_m?f.distance_m.toFixed(1)+' m':'n/a'}</small><br><a href='#' onclick='showDirections(${f.lat}, ${f.lng});return false;'>Directions</a>`; list.appendChild(el); if (USE_GOOGLE && typeof google !== 'undefined' && google.maps){ new google.maps.Marker({position:{lat:f.lat,lng:f.lng},map:mapObj,title:f.name}); } else { L.marker([f.lat,f.lng]).addTo(mapObj).bindPopup(f.name); } }); }).catch(()=>{ document.getElementById('facilities-list').innerText='Failed to load facilities'; }); }
+
+function fetchDoctors(lat,lng){ fetch('/doctors_nearby',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lat:lat,lng:lng,radius:5000})}).then(r=>r.json()).then(data=>{ const list=document.getElementById('doctors-list'); list.innerHTML=''; (data.doctors||[]).slice(0,10).forEach(d=>{ const el=document.createElement('div'); el.className='mb-2'; el.innerHTML=`<strong>${d.name}</strong> <small class='text-muted'>${d.specialization}</small><br>${d.facility||''}<br><small>${d.availability||''}</small><br><a href='#' onclick='bookDoctor(${JSON.stringify(JSON.stringify(d))});return false;'>Book / Contact</a>`; list.appendChild(el); }); }).catch(()=>{ document.getElementById('doctors-list').innerText='Failed to load doctors'; }); }
+
+function showDirections(lat,lng){ const url=`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`; window.open(url,'_blank'); }
+
+function bookDoctor(djson){ const d = JSON.parse(djson); alert('To book: ' + d.name + '\nCall: ' + (d.phone||'N/A')); }
+
+function uploadPrescription(){ const input=document.getElementById('prescription'); if (!input.files||input.files.length===0){ alert('Choose a file'); return; } const f=input.files[0]; const fd=new FormData(); fd.append('prescription',f); fetch('/upload_prescription',{method:'POST',body:fd}).then(r=>r.json()).then(data=>{ const out=document.getElementById('pres-upload-result'); if (data.ok){ out.innerHTML=`<div class='alert alert-success'>Uploaded. <a href='${data.url}' target='_blank'>View</a></div>`; } else { out.innerHTML=`<div class='alert alert-danger'>${data.error||'Upload failed'}</div>`; } }).catch(e=>{ document.getElementById('pres-upload-result').innerHTML=`<div class='alert alert-danger'>${e}</div>`; }); }
+
+function loadReminders(){ fetch('/api/reminders').then(r=>r.json()).then(data=>{ const el=document.getElementById('reminders-list'); el.innerHTML=''; (data.reminders||[]).forEach(rm=>{ const d=document.createElement('div'); d.className='mb-2'; d.innerHTML=`<strong>${rm.medication_name}</strong><br><small>${rm.dosage} — ${rm.reminder_time}</small>`; el.appendChild(d); }); if (!(data.reminders||[]).length) el.innerText='No reminders set.'; }).catch(()=>{ document.getElementById('reminders-list').innerText='Failed to load reminders'; }); }
+
+window.addEventListener('load', function(){ initLocation(); });
+</script>
+
+</body>
+</html>

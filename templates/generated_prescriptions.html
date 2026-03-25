@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-md-8 offset-md-2">
+      <h3>My Generated Prescriptions</h3>
+      {% if uploads and uploads|length > 0 %}
+        <div class="list-group mt-3">
+          {% for u in uploads %}
+            <div class="list-group-item d-flex justify-content-between align-items-center">
+              <div>
+                <strong>{{ u.patient_name or 'Patient' }}</strong>
+                <div class="text-muted small">Doctor: {{ u.doctor_name or '—' }} • {{ u.created_at }}</div>
+              </div>
+              <div>
+                <a class="btn btn-sm btn-primary" href="{{ u.url }}" target="_blank">View</a>
+                {% if not u.is_cancelled %}
+                  <button class="btn btn-sm btn-danger ms-2" onclick="cancelGenerated({{ u.id }}, this)">Cancel</button>
+                {% else %}
+                  <span class="badge bg-secondary ms-2">Cancelled</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <div class="alert alert-info mt-3">You have no generated prescriptions yet.</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<script>
+function cancelGenerated(id, btn){
+  if(!confirm('Cancel this generated prescription?')) return;
+  fetch('/cancel_generated_prescription', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({id:id})}).then(r=>r.json()).then(d=>{
+    if(d.ok){
+      btn.disabled = true;
+      btn.textContent = 'Cancelled';
+      btn.classList.remove('btn-danger');
+      btn.classList.add('btn-secondary');
+    } else {
+      alert(d.error || 'Failed');
+    }
+  }).catch(e=>alert(e));
+}
+</script>
+
+{% endblock %}

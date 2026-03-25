@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-3">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>Acute Fever & Cough — Patient Handout</h2>
+    <button class="btn btn-sm btn-outline-primary" onclick="window.print()">Print</button>
+  </div>
+
+  <p class="text-muted">This handout provides immediate advice for people experiencing fever and cough. It does not replace a medical consultation.</p>
+
+  <h5>Summary</h5>
+  <p>You have fever and cough. These symptoms most commonly reflect a viral respiratory illness (e.g., common cold, influenza, COVID‑19), but can also be due to bronchitis, asthma exacerbation, or other causes. Monitor your symptoms closely.</p>
+
+  <h5>Immediate Self‑Care</h5>
+  <ul>
+    <li><strong>Rest:</strong> Reduce activity and get extra rest.</li>
+    <li><strong>Hydration:</strong> Drink plenty of fluids—water, broths, or oral rehydration solutions.</li>
+    <li><strong>Fever control:</strong> Use paracetamol (acetaminophen) or ibuprofen per product instructions for comfort.</li>
+    <li><strong>Cough relief:</strong> Warm fluids, throat lozenges, humidified air, and honey (for children >1 year) may help.</li>
+  </ul>
+
+  <h5>When To Seek Urgent Care</h5>
+  <ul>
+    <li>Shortness of breath, difficulty breathing, or rapid breathing.</li>
+    <li>High fever unresponsive to medication or fever lasting more than 48–72 hours.</li>
+    <li>Chest pain, coughing up blood, confusion, or inability to stay awake.</li>
+    <li>Infants, elderly, or immunocompromised patients with new or worsening symptoms—seek evaluation promptly.</li>
+  </ul>
+
+  <h5>Recommended Next Steps</h5>
+  <ul>
+    <li>Consider COVID‑19 and influenza testing according to local guidance.</li>
+    <li>If you have asthma, use your inhaler as prescribed and seek care if symptoms do not improve with reliever medication.</li>
+    <li>Arrange follow‑up with primary care (telehealth or in‑person) within 48–72 hours if symptoms persist or worsen.</li>
+  </ul>
+
+  <h5>Contact & Booking</h5>
+  <p>If you would like help booking an appointment with a nearby clinician, use the "Book Appointment" link on your dashboard or contact your clinic directly.</p>
+
+  <hr>
+  <p class="small text-muted">This information is for general guidance only. For personalized medical advice, contact your healthcare provider.</p>
+</div>
+{% endblock %}

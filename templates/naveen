@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row align-items-center min-vh-80">
+ <div class="col-md-6">
+ <h1 class="display-4 fw-bold text-primary">Your AI Health Assistant</h1>
+ <p class="lead mb-4">24/7 healthcare support with AI-powered symptom checking,appointment booking, and emergency services.</p>
+ <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+ <a href="{{ url_for('register') }}" class="btn btn-primary btn-lg px-4 me-md-2">Get Started</a>
+ <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-lg px-4">Login</a>
+ </div>
+ </div>
+ <div class="col-md-6">
+ <img src="https://cdn.pixabay.com/photo/2017/10/04/09/56/medical-2816123_1280.jpg" 
+ class="img-fluid rounded" alt="Healthcare">
+ </div>
+</div>
+<div class="row mt-5">
+ <div class="col-12">
+ <h2 class="text-center mb-4">Our Features</h2>
+ </div>
+</div>
+<div class="row g-4">
+ <div class="col-md-4">
+ <div class="card feature-card h-100">
+ <div class="card-body text-center">
+ <i class="fas fa-robot fa-3x text-primary mb-3"></i>
+ <h5 class="card-title">AI Symptom Checker</h5>
+ <p class="card-text">Get instant preliminary assessment of your symptoms using AI.</p>
+ </div>
+ </div>
+ </div>
+ <div class="col-md-4">
+ <div class="card feature-card h-100">
+ <div class="card-body text-center">
+ <i class="fas fa-calendar-check fa-3x text-success mb-3"></i>
+ <h5 class="card-title">Appointment Booking</h5>
+ <p class="card-text">Book doctor appointments online with calendar integration.</p>
+ </div>
+ </div>
+ </div>
+ <div class="col-md-4">
+ <div class="card feature-card h-100">
+ <div class="card-body text-center">
+ <i class="fas fa-pills fa-3x text-warning mb-3"></i>
+ <h5 class="card-title">Medication Reminders</h5>
+ <p class="card-text">Never miss your medication with smart reminder system.</p>
+ </div>
+ </div>
+ </div>
+</div>
+{% endblock %}

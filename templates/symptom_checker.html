@@ -1,0 +1,950 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12">
+    <h2><i class="fas fa-stethoscope text-primary me-2"></i>Symptom Checker</h2>
+    <p class="text-muted">Describe your symptoms and get preliminary health information</p>
+    <div class="alert alert-warning">
+      <i class="fas fa-exclamation-triangle me-2"></i>
+            <!-- hidden field to carry JSON analysis findings to server on submit -->
+            <input type="hidden" name="image_findings" id="image-findings-input" value="">
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Tell Us Your Symptoms</h5>
+      </div>
+      <div class="card-body">
+           <!-- Embedded Trained Symptom Database -->
+           <textarea id="symptom-database" style="display: none;">{"vomiting": {"conditions": ["Viral Infection"], "severity": "medium", "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days", "emergency": false}, "body": {"conditions": ["Migraine"], "severity": "low", "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain", "emergency": false}, "pain": {"conditions": ["Migraine"], "severity": "low", "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain", "emergency": false}, "headache": {"conditions": ["Migraine"], "severity": "low", "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain", "emergency": false}, "fever": {"conditions": ["Viral Infection"], "severity": "medium", "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days", "emergency": false}, "cold": {"conditions": ["Migraine"], "severity": "low", "advice": "Home: Rest in dark room, avoid screen. Doctor: Paracetamol 650mg + Domperidone once during pain", "emergency": false}, "runny": {"conditions": ["Viral Infection"], "severity": "medium", "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days", "emergency": false}, "nose": {"conditions": ["Viral Infection"], "severity": "medium", "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days", "emergency": false}, "fatigue": {"conditions": ["Heart Problem"], "severity": "high", "advice": "Home: Do not self-medicate. Doctor: Immediate hospital visit – ECG and cardiologist consultation required", "emergency": true}, "nausea": {"conditions": ["Viral Infection"], "severity": "medium", "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days", "emergency": false}, "diarrhea": {"conditions": ["Food Poisoning"], "severity": "medium", "advice": "Home: ORS, light diet, rest. Doctor: ORS + Loperamide 2mg twice daily after loose stools", "emergency": false}, "sore": {"conditions": ["Viral Infection"], "severity": "medium", "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days", "emergency": false}, "cough": {"conditions": ["Viral Infection"], "severity": "low", "advice": "Home: Warm water, honey, ginger tea. Doctor: Cough syrup 10ml twice daily after food for 7 days", "emergency": false}, "throat": {"conditions": ["Viral Infection"], "severity": "medium", "advice": "Home: Paracetamol 500mg, warm fluids, rest. Doctor: Paracetamol 650mg twice daily after food for 3 days", "emergency": false}, "chest": {"conditions": ["Heart Problem"], "severity": "high", "advice": "Home: Do not self-medicate. Doctor: Immediate hospital visit – ECG and cardiologist consultation required", "emergency": true}}</textarea>
+
+             <!-- Optional: Paste additional dataset JSON extracted from an image here (two-dataset paste supported).
+               Example (paste a JSON object with symptom keys): {"dizziness": {"conditions":["Vertigo"],"severity":"low"}} -->
+             <div class="mb-2">
+            <label for="pasted-image-datasets" class="form-label small">Paste parsed dataset JSON (optional)</label>
+            <textarea id="pasted-image-datasets" class="form-control form-control-sm" rows="3" placeholder='Paste JSON here, e.g. {"dizziness":{"conditions":["Vertigo"],"severity":"low"}}'></textarea>
+            <div class="form-text small">Pasting datasets here will merge them into the symptom database for display in the Assessment reply (grouped by mild/moderate/severe).</div>
+             </div>
+
+        <form id="symptom-form" method="POST" action="{{ url_for('symptom_checker') }}" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label for="symptoms" class="form-label">What symptoms are you experiencing?</label>
+            <textarea class="form-control" id="symptoms" name="symptoms" rows="4"
+                      placeholder="Example: I have a headache, fever, and sore throat for 2 days..." required></textarea>
+
+            <div class="mt-2 d-flex align-items-center">
+              <button id="start-voice" type="button" class="btn btn-outline-primary btn-sm me-2">
+                <i class="fas fa-microphone"></i> Start Voice Input
+              </button>
+              <button id="stop-voice" type="button" class="btn btn-outline-secondary btn-sm me-2" disabled>
+                <i class="fas fa-stop"></i> Stop
+              </button>
+              <span id="voice-status" class="text-muted small">Voice inactive</span>
+            </div>
+            <div id="voice-response" class="mt-2"></div>
+
+            <div class="mt-3">
+              <label for="symptom-image" class="form-label">Upload an image (optional):</label>
+              <input class="form-control" type="file" id="symptom-image" name="symptom_image" accept="image/*">
+              <div class="mt-2">
+                <img id="symptom-image-preview" src="#" style="max-width:200px; display:none;" alt="Preview">
+              </div>
+              <div id="symptom-image-analysis" class="mt-2" style="display:none;">
+                <h6 class="mt-2">Image analysis (preliminary)</h6>
+                <div id="image-analysis-findings" class="small text-muted">Analyzing...</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label for="age" class="form-label">Age</label>
+              <input type="number" class="form-control" id="age" name="age" min="1" max="120" placeholder="Your age" value="{{ age|default('') }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label for="gender" class="form-label">Gender</label>
+              <select class="form-select" id="gender" name="gender">
+                <option value="">Select...</option>
+                <option value="male"   {% if gender == 'male' %}selected{% endif %}>Male</option>
+                <option value="female" {% if gender == 'female' %}selected{% endif %}>Female</option>
+                <option value="other"  {% if gender == 'other' %}selected{% endif %}>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="duration" class="form-label">How long have you had these symptoms?</label>
+            <select class="form-select" id="duration" name="duration">
+              <option value="">Select duration...</option>
+              <option value="less-than-24"  {% if duration == 'less-than-24' %}selected{% endif %}>Less than 24 hours</option>
+              <option value="1-3-days"      {% if duration == '1-3-days' %}selected{% endif %}>1-3 days</option>
+              <option value="4-7-days"      {% if duration == '4-7-days' %}selected{% endif %}>4-7 days</option>
+              <option value="1-2-weeks"     {% if duration == '1-2-weeks' %}selected{% endif %}>1-2 weeks</option>
+              <option value="more-than-2-weeks" {% if duration == 'more-than-2-weeks' %}selected{% endif %}>More than 2 weeks</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Severity Level</label>
+            <div class="btn-group w-100" role="group">
+              <input type="radio" class="btn-check" name="severity" id="mild" value="mild" {% if severity == 'mild' %}checked{% endif %}>
+              <label class="btn btn-outline-success" for="mild">Mild</label>
+
+              <input type="radio" class="btn-check" name="severity" id="moderate" value="moderate" {% if severity == 'moderate' %}checked{% endif %}>
+              <label class="btn btn-outline-warning" for="moderate">Moderate</label>
+
+              <input type="radio" class="btn-check" name="severity" id="severe" value="severe" {% if severity == 'severe' %}checked{% endif %}>
+              <label class="btn btn-outline-danger" for="severe">Severe</label>
+            </div>
+          </div>
+
+          <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary btn-lg">
+              <i class="fas fa-search me-2"></i>Analyze Symptoms
+            </button>
+          </div>
+        </form>
+        <!-- Client-side assessment area (populated from image analysis) -->
+        <div id="client-assessment-container" class="mt-4" style="display:none;">
+          <div class="card">
+            <div class="card-header"><h6 class="mb-0">Assessment</h6></div>
+            <div class="card-body">
+              <div id="client-assessment-text" class="assessment-text text-muted">Image analysis results will appear here.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header bg-info text-white">
+        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Common Symptoms</h6>
+      </div>
+      <div class="card-body">
+        <div class="d-flex flex-wrap gap-2" id="symptom-badges">
+          <!-- Symptom badges will be populated from the embedded symptom database and pasted datasets -->
+        </div>
+        <small class="text-muted mt-2 d-block">Click to add to your symptoms</small>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header bg-danger text-white">
+        <h6 class="mb-0"><i class="fas fa-ambulance me-2"></i>Emergency Signs</h6>
+      </div>
+      <div class="card-body">
+        <p class="small mb-2">Seek immediate medical attention if you experience:</p>
+        <ul class="small mb-0">
+          <li>Difficulty breathing</li>
+          <li>Chest pain or pressure</li>
+          <li>Sudden confusion</li>
+          <li>Severe bleeding</li>
+          <li>Loss of consciousness</li>
+          <li>Severe allergic reaction</li>
+        </ul>
+        <a href="{{ url_for('emergency_services') }}" class="btn btn-danger btn-sm w-100 mt-3">
+          <i class="fas fa-phone-alt me-2"></i>Emergency Services
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if result %}
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="prescription card">
+      <div class="prescription-header p-3 d-flex justify-content-between align-items-start">
+        <div>
+          <h4 class="mb-0">City Health Clinic</h4>
+          <div class="text-muted small">Primary Care / Telehealth</div>
+        </div>
+        <div class="text-end small">
+          <div><strong>Date:</strong> {{ current_time or '' }}</div>
+          <div><strong>Patient:</strong> {{ session.get('username') or 'Patient' }}</div>
+          <div><strong>Age / Sex:</strong> {{ age|default('N/A') }} / {{ gender|default('N/A') }}</div>
+        </div>
+      </div>
+
+      <div class="prescription-body p-3">
+        <div class="row">
+          <div class="col-md-7">
+            <h6 class="mb-2">Assessment</h6>
+            <div class="assessment-text mb-3">{{ result }}</div>
+            <!-- Injected dataset grouping by severity will appear here -->
+            <div id="dataset-grouping" class="mt-3"></div>
+
+            <h6 class="mb-2">Recommended Actions</h6>
+            <ol>
+              <li>Monitor symptoms and record temperature twice daily.</li>
+              <li>Rest and maintain hydration. Use antipyretics for fever (paracetamol / ibuprofen as appropriate).</li>
+              <li>If respiratory symptoms worsen or red-flag signs appear, seek urgent care.</li>
+            </ol>
+
+            {% if image_url %}
+            <div class="mt-3">
+              <h6>Uploaded Image</h6>
+              <img src="{{ image_url }}" alt="Uploaded image" style="max-width:300px;" class="img-fluid" />
+            </div>
+            {% endif %}
+          </div>
+
+          <div class="col-md-5">
+            <div class="med-box p-3 mb-3">
+              <h6 class="mb-2">Prescription / Advice</h6>
+              <div class="small text-muted mb-2">(Suggested — confirm with clinician)</div>
+
+              <div class="med-list">
+                {% if meds_list and meds_list|length > 0 %}
+                  {% for m in meds_list %}
+                    <div class="med-item">{{ m }}</div>
+                  {% endfor %}
+                {% else %}
+                  <div class="med-item">No specific medications suggested. Follow symptomatic care and consult a clinician.</div>
+                {% endif %}
+              </div>
+
+              {% if dosage_info and dosage_info|length > 0 %}
+              <div class="dosage-summary mt-3">
+                <h6 class="mb-2 text-secondary">Dosage Summary (from guidance)</h6>
+                {% for d in dosage_info %}
+                  <div class="med-item">{{ d.replace('\n','<br>') | safe }}</div>
+                {% endfor %}
+              </div>
+              {% endif %}
+
+              <!-- Detailed Medication Instructions -->
+              {% if meds_list and meds_list|length > 0 %}
+              <div class="mt-3 pt-3 border-top">
+                <h6 class="mb-2 text-primary">Medication Details & Instructions</h6>
+                <div class="medication-guide small">
+                  <div class="alert alert-info mb-2" role="alert">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Important:</strong> Always consult with your doctor or pharmacist before taking any medication. This is general guidance only.
+                  </div>
+
+                  <div class="med-details-accordion">
+                    <!-- Paracetamol/Acetaminophen -->
+                    <div class="med-card mb-2">
+                      <button class="btn btn-sm btn-outline-primary w-100 text-start med-toggle" data-med="paracetamol">
+                        <i class="fas fa-chevron-right me-2"></i>Paracetamol/Acetaminophen
+                      </button>
+                      <div class="med-detail" id="paracetamol" style="display:none; background:#f0f7ff; padding:10px; border-radius:4px; margin-top:5px;">
+                        <p class="mb-2"><strong>For:</strong> Fever, headache, mild-to-moderate pain</p>
+                        <table class="table table-sm mb-2">
+                          <tr><td><strong>Dosage:</strong></td><td>500mg - 1000mg per dose</td></tr>
+                          <tr><td><strong>Frequency:</strong></td><td>Every 4-6 hours (max 4000mg/day)</td></tr>
+                          <tr><td><strong>Duration:</strong></td><td>Do not use for more than 10 days without medical advice</td></tr>
+                          <tr><td><strong>Form:</strong></td><td>Tablet, capsule, liquid suspension</td></tr>
+                        </table>
+                        <p class="small mb-1"><strong>How to take:</strong> With or without food. Swallow whole with water.</p>
+                        <p class="small mb-1"><strong>Precautions:</strong> Do not combine with other products containing paracetamol. Avoid if you have liver disease or drink alcohol regularly.</p>
+                      </div>
+                    </div>
+
+                    <!-- Ibuprofen -->
+                    <div class="med-card mb-2">
+                      <button class="btn btn-sm btn-outline-primary w-100 text-start med-toggle" data-med="ibuprofen">
+                        <i class="fas fa-chevron-right me-2"></i>Ibuprofen
+                      </button>
+                      <div class="med-detail" id="ibuprofen" style="display:none; background:#f0f7ff; padding:10px; border-radius:4px; margin-top:5px;">
+                        <p class="mb-2"><strong>For:</strong> Fever, pain, inflammation</p>
+                        <table class="table table-sm mb-2">
+                          <tr><td><strong>Dosage:</strong></td><td>200mg - 400mg per dose</td></tr>
+                          <tr><td><strong>Frequency:</strong></td><td>Every 6-8 hours (max 1200mg/day without prescription)</td></tr>
+                          <tr><td><strong>Duration:</strong></td><td>Use for 3-5 days maximum for pain; 3 days for fever</td></tr>
+                          <tr><td><strong>Form:</strong></td><td>Tablet, capsule, suspension</td></tr>
+                        </table>
+                        <p class="small mb-1"><strong>How to take:</strong> Take with food or milk to prevent stomach upset.</p>
+                        <p class="small mb-1"><strong>Precautions:</strong> Avoid if pregnant, have stomach ulcers, kidney/heart disease. Not for children under 12 without guidance.</p>
+                      </div>
+                    </div>
+
+                    <!-- Loratadine (Antihistamine) -->
+                    <div class="med-card mb-2">
+                      <button class="btn btn-sm btn-outline-primary w-100 text-start med-toggle" data-med="loratadine">
+                        <i class="fas fa-chevron-right me-2"></i>Loratadine (Allergy Relief)
+                      </button>
+                      <div class="med-detail" id="loratadine" style="display:none; background:#f0f7ff; padding:10px; border-radius:4px; margin-top:5px;">
+                        <p class="mb-2"><strong>For:</strong> Allergies, itching, hives, allergic rhinitis</p>
+                        <table class="table table-sm mb-2">
+                          <tr><td><strong>Dosage:</strong></td><td>10mg once daily</td></tr>
+                          <tr><td><strong>Frequency:</strong></td><td>Once daily (preferably in the evening)</td></tr>
+                          <tr><td><strong>Duration:</strong></td><td>As needed; can be used long-term</td></tr>
+                          <tr><td><strong>Form:</strong></td><td>Tablet, liquid</td></tr>
+                        </table>
+                        <p class="small mb-1"><strong>How to take:</strong> Can be taken with or without food.</p>
+                        <p class="small mb-1"><strong>Precautions:</strong> May cause drowsiness. Avoid driving if affected. Not for children under 2 without doctor approval.</p>
+                      </div>
+                    </div>
+
+                    <!-- Cetirizine (Antihistamine) -->
+                    <div class="med-card mb-2">
+                      <button class="btn btn-sm btn-outline-primary w-100 text-start med-toggle" data-med="cetirizine">
+                        <i class="fas fa-chevron-right me-2"></i>Cetirizine (Allergy Relief)
+                      </button>
+                      <div class="med-detail" id="cetirizine" style="display:none; background:#f0f7ff; padding:10px; border-radius:4px; margin-top:5px;">
+                        <p class="mb-2"><strong>For:</strong> Allergies, urticaria, itching</p>
+                        <table class="table table-sm mb-2">
+                          <tr><td><strong>Dosage:</strong></td><td>10mg once daily or 5mg twice daily</td></tr>
+                          <tr><td><strong>Frequency:</strong></td><td>Once or twice daily</td></tr>
+                          <tr><td><strong>Duration:</strong></td><td>As needed; can be used long-term</td></tr>
+                          <tr><td><strong>Form:</strong></td><td>Tablet, capsule, liquid</td></tr>
+                        </table>
+                        <p class="small mb-1"><strong>How to take:</strong> Can be taken with or without food. Swallow whole.</p>
+                        <p class="small mb-1"><strong>Precautions:</strong> May cause drowsiness in some people. Avoid if pregnant without doctor approval.</p>
+                      </div>
+                    </div>
+
+                    <!-- Cough Syrup -->
+                    <div class="med-card mb-2">
+                      <button class="btn btn-sm btn-outline-primary w-100 text-start med-toggle" data-med="cough-syrup">
+                        <i class="fas fa-chevron-right me-2"></i>Cough Suppressant/Expectorant
+                      </button>
+                      <div class="med-detail" id="cough-syrup" style="display:none; background:#f0f7ff; padding:10px; border-radius:4px; margin-top:5px;">
+                        <p class="mb-2"><strong>For:</strong> Dry cough, wet cough with mucus</p>
+                        <table class="table table-sm mb-2">
+                          <tr><td><strong>Dosage:</strong></td><td>10-20ml per dose (as per bottle instructions)</td></tr>
+                          <tr><td><strong>Frequency:</strong></td><td>Every 4-8 hours as needed</td></tr>
+                          <tr><td><strong>Duration:</strong></td><td>Use for 7-10 days; see doctor if persists</td></tr>
+                          <tr><td><strong>Form:</strong></td><td>Liquid syrup</td></tr>
+                        </table>
+                        <p class="small mb-1"><strong>How to take:</strong> Shake bottle well. Use provided measuring cup. Can take with or without water.</p>
+                        <p class="small mb-1"><strong>Precautions:</strong> Keep out of reach of children. Not for children under 2 without medical guidance. Do not exceed recommended dose.</p>
+                      </div>
+                    </div>
+
+                    <!-- Antibiotics (if applicable) -->
+                    <div class="med-card mb-2">
+                      <button class="btn btn-sm btn-outline-primary w-100 text-start med-toggle" data-med="antibiotics">
+                        <i class="fas fa-chevron-right me-2"></i>Antibiotics (if prescribed)
+                      </button>
+                      <div class="med-detail" id="antibiotics" style="display:none; background:#f0f7ff; padding:10px; border-radius:4px; margin-top:5px;">
+                        <p class="mb-2"><strong>For:</strong> Bacterial infections (only if prescribed by doctor)</p>
+                        <table class="table table-sm mb-2">
+                          <tr><td><strong>Dosage:</strong></td><td>As prescribed by doctor (typically 250-500mg)</td></tr>
+                          <tr><td><strong>Frequency:</strong></td><td>As directed (typically 2-4 times daily)</td></tr>
+                          <tr><td><strong>Duration:</strong></td><td>Complete full course (usually 7-10 days) even if feeling better</td></tr>
+                          <tr><td><strong>Form:</strong></td><td>Tablets, capsules, suspension</td></tr>
+                        </table>
+                        <p class="small mb-1"><strong>How to take:</strong> Take with water. Some may require empty stomach, others with food (check label).</p>
+                        <p class="small mb-1"><strong>⚠️ Important:</strong> Never skip doses or stop early. Always complete the full course. Watch for allergic reactions.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- General User Manual -->
+                  <div class="alert alert-warning mt-3" role="alert">
+                    <h6 class="alert-heading"><i class="fas fa-book me-2"></i>General User Manual</h6>
+                    <ol class="small mb-0">
+                      <li><strong>Before Taking:</strong> Read all instructions and warnings. Check expiry date. Inform doctor of other medications.</li>
+                      <li><strong>Storage:</strong> Keep in original container at room temperature (15-25°C). Away from moisture and sunlight.</li>
+                      <li><strong>Timing:</strong> Set phone reminders for regular doses. Do not skip or double dose.</li>
+                      <li><strong>Food & Drink:</strong> Some medications require food, others on empty stomach. Check instructions. Avoid alcohol.</li>
+                      <li><strong>Side Effects:</strong> Common: nausea, dizziness, drowsiness. Contact doctor if severe or persistent.</li>
+                      <li><strong>Interactions:</strong> Inform doctor of all medications, supplements, and herbal products you take.</li>
+                      <li><strong>Pregnancy/Nursing:</strong> Always consult doctor if pregnant or breastfeeding before taking any medication.</li>
+                      <li><strong>Emergencies:</strong> If overdose or severe reaction occurs, call emergency services or poison control immediately.</li>
+                      <li><strong>Follow-up:</strong> See doctor as scheduled even if symptoms improve. Keep all appointments.</li>
+                      <li><strong>Disposal:</strong> Do not flush medications. Take to pharmacy or designated disposal site.</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="signature p-3 text-center">
+              <div class="signature-line">________________________</div>
+              <div class="text-muted small">
+                Clinical assessment provided by AI-assisted assistant; verify with a licensed clinician.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="prescription-footer p-3 d-flex justify-content-between align-items-center">
+        <div class="small text-muted">Last updated: {{ current_time or '' }}</div>
+        <div>
+          <a href="{{ url_for('book_appointment') }}" class="btn btn-success btn-sm me-2">
+            <i class="fas fa-calendar-plus me-1"></i> Book Appointment
+          </a>
+          <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-print me-1"></i> Print
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+.prescription { border: 1px solid #e2e6ea; border-radius: 6px; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+.prescription-header h4 { font-family: 'Times New Roman', serif; font-weight: 600; }
+.prescription-body { background: #fff; }
+.assessment-text { white-space: pre-wrap; font-size: 0.97rem; color: #222; }
+.med-box { background: #f8f9fb; border-radius:4px; max-height: 800px; overflow-y: auto; }
+.med-item { padding:6px 8px; border-bottom:1px dashed #e0e0e0; font-size:0.95rem; }
+.signature-line { margin-top:18px; border-top:1px solid #333; padding-top:6px; font-weight:600; }
+.prescription-footer { background:#fafbfd; }
+
+/* Medication Details Styles */
+.med-details-accordion { max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 5px; background: #f9f9f9; }
+.med-card { margin: 0; }
+.med-toggle { 
+  font-size: 0.9rem; 
+  font-weight: 500;
+  border: 1px solid #ccc !important;
+  transition: all 0.3s ease;
+}
+.med-toggle:hover { 
+  background-color: #e7f3ff !important; 
+  border-color: #0056b3 !important;
+}
+.med-toggle.active { 
+  background-color: #0056b3 !important; 
+  color: white !important;
+  border-color: #0056b3 !important;
+}
+.med-detail table { margin-bottom: 0.5rem; }
+.med-detail table td { padding: 4px 6px; border: 1px solid #e0e0e0; }
+.med-detail table strong { color: #0056b3; }
+.med-detail p { margin-bottom: 0.5rem; line-height: 1.4; }
+
+.medication-guide ol, .medication-guide ul { padding-left: 1.5rem; }
+.medication-guide li { margin-bottom: 0.5rem; }
+
+@media print {
+  .badge, .btn { display:none !important }
+  .prescription { box-shadow:none; border: none; }
+  .med-details-accordion { max-height: none !important; overflow: visible !important; page-break-inside: avoid; }
+  .med-detail { display: block !important; background: white !important; page-break-inside: avoid; }
+}
+
+@media (max-width: 768px) {
+  .med-box { max-height: 600px; }
+  .med-details-accordion { max-height: 300px; }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  function addSymptom(symptom) {
+    const textarea = document.getElementById('symptoms');
+    if (!textarea) return;
+    const current = textarea.value.trim();
+    textarea.value = current ? (current + ', ' + symptom) : symptom;
+    textarea.focus();
+  }
+
+  // Attach click handlers to symptom badges
+  document.querySelectorAll('.badge-symptom').forEach(function(el) {
+    el.addEventListener('click', function() {
+      addSymptom(this.dataset.symptom);
+    });
+  });
+
+  const form = document.getElementById('symptom-form');
+  const textarea = document.getElementById('symptoms');
+  if (form && textarea) {
+    form.addEventListener('submit', function (e) {
+      if (!textarea.value.trim()) {
+        e.preventDefault();
+        alert('Please describe your symptoms');
+        textarea.focus();
+        return false;
+      }
+    });
+  }
+
+  // Browser Speech Recognition
+  const startBtn = document.getElementById('start-voice');
+  const stopBtn = document.getElementById('stop-voice');
+  const statusEl = document.getElementById('voice-status');
+  const voiceResponseEl = document.getElementById('voice-response');
+
+  let recognition = null;
+
+  if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
+    if (startBtn) startBtn.disabled = true;
+    if (statusEl) statusEl.textContent = 'Speech Recognition not supported in this browser';
+  } else {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1;
+
+    recognition.addEventListener('start', function () {
+      if (statusEl) statusEl.textContent = 'Listening...';
+      if (startBtn) startBtn.disabled = true;
+      if (stopBtn) stopBtn.disabled = false;
+      if (voiceResponseEl) voiceResponseEl.textContent = '';
+    });
+
+    recognition.addEventListener('end', function () {
+      if (statusEl) statusEl.textContent = 'Voice inactive';
+      if (startBtn) startBtn.disabled = false;
+      if (stopBtn) stopBtn.disabled = true;
+    });
+
+    let finalTranscript = '';
+
+    recognition.addEventListener('result', function (event) {
+      let interim = '';
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const res = event.results[i];
+        if (res.isFinal) {
+          finalTranscript += res[0].transcript + ' ';
+        } else {
+          interim += res[0].transcript;
+        }
+      }
+
+      if (textarea) {
+        const existing = textarea.value.trim();
+        const combined = (existing + ' ' + finalTranscript + ' ' + interim).trim();
+        textarea.value = combined;
+      }
+
+      if (finalTranscript.trim()) {
+        fetch('{{ url_for("voice_assistant") }}', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript: finalTranscript.trim() })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (!voiceResponseEl) return;
+          if (data.response) {
+            voiceResponseEl.innerHTML =
+              '<div class="alert alert-info small">Assistant: ' + data.response + '</div>';
+          } else if (data.error) {
+            voiceResponseEl.innerHTML =
+              '<div class="alert alert-warning small">Error: ' + data.error + '</div>';
+          }
+        })
+        .catch(err => {
+          if (voiceResponseEl) {
+            voiceResponseEl.innerHTML =
+              '<div class="alert alert-danger small">Failed to contact voice endpoint</div>';
+          }
+        });
+
+        finalTranscript = '';
+      }
+    });
+
+    if (startBtn) {
+      startBtn.addEventListener('click', function () {
+        try { recognition.start(); } catch (e) { /* ignore */ }
+      });
+    }
+
+    if (stopBtn) {
+      stopBtn.addEventListener('click', function () {
+        try { recognition.stop(); } catch (e) { /* ignore */ }
+      });
+    }
+  }
+
+  // Image preview
+  const imageInput = document.getElementById('symptom-image');
+  const imagePreview = document.getElementById('symptom-image-preview');
+
+  if (imageInput && imagePreview) {
+    imageInput.addEventListener('change', function () {
+      const file = this.files && this.files[0];
+      if (!file) {
+        imagePreview.style.display = 'none';
+        imagePreview.src = '#';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        imagePreview.src = e.target.result;
+        imagePreview.style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Medication Details Toggle
+  document.querySelectorAll('.med-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      const medId = this.getAttribute('data-med');
+      const medDetail = document.getElementById(medId);
+      
+      if (!medDetail) return;
+
+      // Toggle this one
+      const isOpen = medDetail.style.display !== 'none';
+      medDetail.style.display = isOpen ? 'none' : 'block';
+      
+      // Update button state
+      this.classList.toggle('active', !isOpen);
+      
+      // Rotate icon
+      const icon = this.querySelector('i');
+      if (icon) {
+        if (isOpen) {
+          icon.style.transform = 'rotate(0deg)';
+        } else {
+          icon.style.transform = 'rotate(90deg)';
+        }
+      }
+    });
+  });
+
+  // Add smooth icon transitions
+  const style = document.createElement('style');
+  style.textContent = `
+    .med-toggle i {
+      transition: transform 0.3s ease;
+      display: inline-block;
+    }
+  `;
+  document.head.appendChild(style);
+});
+</script>
+<script>
+// Client-side image analysis: POST selected image to /analyze_image and display findings
+(function(){
+  const imageInput = document.getElementById('symptom-image');
+  const findingsWrap = document.getElementById('symptom-image-analysis');
+  const findingsEl = document.getElementById('image-analysis-findings');
+  if (!imageInput || !findingsWrap || !findingsEl) return;
+
+  function escapeHtmlForInsert(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  imageInput.addEventListener('change', function(){
+    const file = this.files && this.files[0];
+    if (!file){ findingsWrap.style.display='none'; return; }
+    findingsWrap.style.display='block';
+    findingsEl.innerHTML = 'Analyzing image...';
+
+    const fd = new FormData(); fd.append('image', file);
+    fetch('/analyze_image', { method: 'POST', body: fd })
+      .then(r=>r.json())
+      .then(j=>{
+        if (!j) { findingsEl.innerHTML = '<div class="text-danger">No response from analysis.</div>'; return; }
+        if (j.error){ findingsEl.innerHTML = '<div class="text-danger">Error: '+ escapeHtmlForInsert(j.error) +'</div>'; return; }
+        const findings = j.findings || [];
+        if (!findings.length){ findingsEl.innerHTML = '<div class="text-muted">No findings detected.</div>'; return; }
+        const ul = document.createElement('ul'); ul.className='small';
+        findings.forEach(f=>{
+          const li = document.createElement('li');
+          const pct = f.percent ? (' <em>(' + escapeHtmlForInsert(String(f.percent)) + '%)</em>') : '';
+          li.innerHTML = '<strong>' + escapeHtmlForInsert((f.type||'finding').replace(/_/g,' ')) + ':</strong> ' + escapeHtmlForInsert(f.message || '') + pct;
+          ul.appendChild(li);
+        });
+        findingsEl.innerHTML=''; findingsEl.appendChild(ul);
+        // Also populate client-side Assessment area with a concise summary
+        try{
+          const assessmentEl = document.getElementById('client-assessment-text');
+          const container = document.getElementById('client-assessment-container');
+          if (assessmentEl && container){
+            const lines = findings.map(f => `• ${f.message || f.type || ''}`);
+            assessmentEl.innerHTML = lines.join('<br>');
+            assessmentEl.classList.remove('text-muted');
+            container.style.display = 'block';
+          }
+        }catch(e){/* ignore */}
+        // Store findings JSON into hidden input so server receives them on form submit
+        try{
+          const hidden = document.getElementById('image-findings-input');
+          if (hidden) hidden.value = JSON.stringify(findings || []);
+        }catch(e){}
+      }).catch(err=>{
+        findingsEl.innerHTML = '<div class="text-danger">Analysis failed: '+ escapeHtmlForInsert(err.message || String(err)) +'</div>';
+      });
+  });
+})();
+
+// Handle badge clicks: add symptom to textarea
+document.addEventListener('DOMContentLoaded', function(){
+  const textarea = document.getElementById('symptoms');
+  const badges = document.querySelectorAll('.badge-symptom');
+  
+  // Consume prefill_symptom from localStorage (set by dashboard)
+  try{
+    const prefill = localStorage.getItem('prefill_symptom');
+    if (prefill && textarea){
+      const current = textarea.value.trim();
+      if (current){
+        textarea.value = current + ', ' + prefill;
+      } else {
+        textarea.value = prefill;
+      }
+      localStorage.removeItem('prefill_symptom');
+      // Focus the textarea
+      textarea.focus();
+    }
+  }catch(e){}
+  
+  // Add click handler to badges
+  badges.forEach(badge => {
+    badge.addEventListener('click', function(){
+      if (!textarea) return;
+      const symptom = this.dataset.symptom || this.textContent;
+      const current = textarea.value.trim();
+      if (current){
+        textarea.value = current + ', ' + symptom;
+      } else {
+        textarea.value = symptom;
+      }
+      textarea.focus();
+    });
+  });
+
+  // TRAINED SYMPTOM ANALYSIS: Parse symptom database and provide severity-based guidance
+  const symptomDatabase = {};
+  try {
+    const dbTextarea = document.getElementById('symptom-database');
+    if (dbTextarea) {
+      Object.assign(symptomDatabase, JSON.parse(dbTextarea.value));
+    }
+    // Populate symptom badges from the database and any pasted datasets
+    try{
+      const badgeContainer = document.getElementById('symptom-badges');
+      if (badgeContainer){
+        // include pasted datasets if present
+        let extra = {};
+        try{ const t = document.getElementById('pasted-image-datasets'); if (t && t.value && t.value.trim()) extra = JSON.parse(t.value); }catch(e){ extra = {}; }
+        const combined = Object.assign({}, symptomDatabase, extra);
+        const keys = Object.keys(combined).sort();
+        badgeContainer.innerHTML = '';
+        keys.forEach(k => {
+          const span = document.createElement('span');
+          span.className = 'badge bg-light text-dark badge-symptom';
+          span.style.cursor = 'pointer';
+          span.dataset.symptom = k;
+          // human-friendly label
+          span.textContent = k.replace(/_/g,' ').replace(/\b\w/g, c=>c.toUpperCase());
+          badgeContainer.appendChild(span);
+        });
+        // bind click handlers for newly created badges
+        badgeContainer.querySelectorAll('.badge-symptom').forEach(badge => {
+          badge.addEventListener('click', function(){
+            if (!textarea) return;
+            const symptom = this.dataset.symptom || this.textContent;
+            const current = textarea.value.trim();
+            if (current){ textarea.value = current + ', ' + symptom; } else { textarea.value = symptom; }
+            textarea.focus();
+            // also trigger analysis
+            try{ analyzeSymptoms(textarea.value.toLowerCase()); }catch(e){}
+          });
+        });
+      }
+    }catch(e){ /* ignore badge population errors */ }
+  } catch(e) {
+    console.warn('Could not parse symptom database:', e);
+  }
+
+  // Store matched symptoms globally for form submission
+  window.matchedSymptoms = [];
+
+  if (textarea) {
+    textarea.addEventListener('input', function() {
+      analyzeSymptoms(this.value.toLowerCase());
+    });
+  }
+
+  function analyzeSymptoms(input) {
+    if (!input || input.trim().length < 2) return;
+
+    const symptoms = input.split(/[,;]/g).map(s => s.trim().toLowerCase());
+    const matches = [];
+    const emergencySymptoms = [];
+
+    symptoms.forEach(symptom => {
+      if (!symptom) return;
+
+      // Check for exact or partial matches in trained database
+      for (const [key, data] of Object.entries(symptomDatabase)) {
+        if (key.includes(symptom) || symptom.includes(key)) {
+          matches.push({
+            symptom: key,
+            conditions: data.conditions,
+            severity: data.severity,
+            advice: data.advice,
+            emergency: data.emergency
+          });
+
+          if (data.emergency) {
+            emergencySymptoms.push(key);
+          }
+          break;
+        }
+      }
+    });
+
+    // Store matched symptoms globally
+    window.matchedSymptoms = matches;
+
+    // Display emergency warnings
+    if (emergencySymptoms.length > 0) {
+      const warningBox = document.createElement('div');
+      warningBox.className = 'alert alert-danger mt-3';
+      warningBox.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i><strong>⚠ Emergency Symptoms Detected:</strong> ' + emergencySymptoms.join(', ') + '<br><small>Seek immediate medical attention or call emergency services.</small>';
+      
+      const existing = textarea.parentElement.querySelector('.trained-db-warning');
+      if (existing) existing.remove();
+      warningBox.className += ' trained-db-warning';
+      textarea.parentElement.insertBefore(warningBox, textarea.nextElementSibling);
+    } else {
+      const existing = textarea.parentElement.querySelector('.trained-db-warning');
+      if (existing) existing.remove();
+    }
+
+    // Display guidance for matched symptoms
+    if (matches.length > 0) {
+      const guidanceBox = document.createElement('div');
+      guidanceBox.className = 'alert alert-info mt-3 trained-db-guidance';
+      let html = '<i class="fas fa-lightbulb me-2"></i><strong>Trained Database Guidance:</strong><ul class="mb-0 mt-2">';
+      
+      matches.forEach(match => {
+        const severityBadge = `<span class="badge bg-${match.severity === 'high' ? 'danger' : match.severity === 'medium' ? 'warning' : 'success'} ms-2">${match.severity}</span>`;
+        html += `<li class="mb-2"><strong>${match.symptom}</strong> ${severityBadge}<br><small>${match.advice}</small></li>`;
+      });
+      
+      html += '</ul>';
+      guidanceBox.innerHTML = html;
+      
+      const existing = textarea.parentElement.querySelector('.trained-db-guidance');
+      if (existing) existing.replaceWith(guidanceBox);
+      else textarea.parentElement.insertBefore(guidanceBox, textarea.nextElementSibling);
+    } else {
+      const existing = textarea.parentElement.querySelector('.trained-db-guidance');
+      if (existing) existing.remove();
+    }
+  }
+
+  // Generate severity-based assessment on form submission
+  const form = document.getElementById('symptom-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      // Add custom fields for matched symptoms and severity analysis
+      const severityLevel = document.querySelector('input[name="severity"]:checked')?.value || 'moderate';
+      
+      // Create hidden field to pass matched symptoms
+      const matchedField = document.createElement('input');
+      matchedField.type = 'hidden';
+      matchedField.name = 'matched_symptoms_json';
+      matchedField.value = JSON.stringify(window.matchedSymptoms);
+      form.appendChild(matchedField);
+
+      const severityField = document.createElement('input');
+      severityField.type = 'hidden';
+      severityField.name = 'severity_level';
+      severityField.value = severityLevel;
+      form.appendChild(severityField);
+    });
+  }
+});
+</script>
+<script>
+// Render merged dataset grouped by severity into the reply section and respect selected severity
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    const groupingEl = document.getElementById('dataset-grouping');
+    if (!groupingEl) return;
+
+    // Parse base symptom DB
+    let base = {};
+    try{ base = JSON.parse(document.getElementById('symptom-database').value || '{}'); }catch(e){ base = {}; }
+
+    // Parse pasted datasets (if any) and merge (pasted overrides)
+    let pasted = {};
+    try{ const t = document.getElementById('pasted-image-datasets'); if (t && t.value && t.value.trim()) pasted = JSON.parse(t.value); }catch(e){ pasted = {}; }
+
+    const merged = Object.assign({}, base, pasted);
+
+    // Group keys by severity mapping
+    const groups = { mild: [], moderate: [], severe: [] };
+    Object.keys(merged).sort().forEach(key => {
+      const entry = merged[key] || {};
+      const sev = (entry.severity || entry.level || '').toString().toLowerCase();
+      let bucket = 'moderate';
+      if (sev === 'low' || sev === 'mild') bucket = 'mild';
+      else if (sev === 'medium' || sev === 'moderate') bucket = 'moderate';
+      else if (sev === 'high' || sev === 'severe') bucket = 'severe';
+      groups[bucket].push({ key: key, entry: entry });
+    });
+
+    const renderList = (items) => {
+      if (!items || items.length===0) return '<div class="text-muted">None</div>';
+      let out = '<ul class="mb-0 small">';
+      items.forEach(it => {
+        const conds = (it.entry.conditions || []).join(', ');
+        const advice = it.entry.advice ? (' — ' + it.entry.advice) : '';
+        out += `<li><strong>${it.key}</strong>${conds?(': '+conds):''}${advice}</li>`;
+      });
+      out += '</ul>';
+      return out;
+    };
+
+    function buildCard(showSeverity){
+      // If no items at all, return empty
+      if (groups.mild.length===0 && groups.moderate.length===0 && groups.severe.length===0) return '';
+      let html = '<div class="card mt-3"><div class="card-header p-2"><strong>Known Datasets (grouped by severity)</strong></div><div class="card-body p-2">';
+      html += '<div class="row">';
+
+      const addCol = (title, cls, items) => `<div class="col-12 col-md-4"><h6 class="mb-1 ${cls}">${title}</h6>${renderList(items)}</div>`;
+
+      if (!showSeverity || showSeverity === 'mild') html += addCol('Mild','text-success', groups.mild);
+      if (!showSeverity || showSeverity === 'moderate') html += addCol('Moderate','text-warning', groups.moderate);
+      if (!showSeverity || showSeverity === 'severe') html += addCol('Severe','text-danger', groups.severe);
+
+      html += '</div></div></div>';
+      return html;
+    }
+
+    // Initial render based on selected severity radio
+    const getSelectedSeverity = () => document.querySelector('input[name="severity"]:checked')?.value || null;
+    groupingEl.innerHTML = buildCard(getSelectedSeverity());
+
+    // Update render when user changes severity selection
+    const radios = document.querySelectorAll('input[name="severity"]');
+    radios.forEach(r => r.addEventListener('change', function(){
+      groupingEl.innerHTML = buildCard(getSelectedSeverity());
+    }));
+
+    // Also update when pasted dataset textarea changes (merge live)
+    const pastedEl = document.getElementById('pasted-image-datasets');
+    if (pastedEl){
+      pastedEl.addEventListener('input', function(){
+        try{
+          const newP = this.value && this.value.trim() ? JSON.parse(this.value) : {};
+          // rebuild groups
+          Object.keys(groups).forEach(k=> groups[k]=[]);
+          const combined = Object.assign({}, base, newP);
+          Object.keys(combined).sort().forEach(key => {
+            const entry = combined[key] || {};
+            const sev = (entry.severity || entry.level || '').toString().toLowerCase();
+            let bucket = 'moderate';
+            if (sev === 'low' || sev === 'mild') bucket = 'mild';
+            else if (sev === 'medium' || sev === 'moderate') bucket = 'moderate';
+            else if (sev === 'high' || sev === 'severe') bucket = 'severe';
+            groups[bucket].push({ key: key, entry: entry });
+          });
+        }catch(e){ /* ignore parse errors */ }
+        groupingEl.innerHTML = buildCard(getSelectedSeverity());
+      });
+    }
+
+  }catch(e){ console.warn('dataset grouping render failed', e); }
+});
+</script>
+{% endblock %}

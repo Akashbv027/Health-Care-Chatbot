@@ -1,0 +1,159 @@
+{
+  "region": "Kodagu",
+  "state": "Karnataka",
+  "country": "India",
+  "hospitals": [
+    {
+      "location": "Ponnampet",
+      "hospitals": [
+        {
+          "hospital_id": "PON001",
+          "hospital_name": "Government Hospital Ponnampet",
+          "type": "Government",
+          "specialties": ["General Medicine", "Emergency Care", "Primary Healthcare"],
+          "emergency_services": true,
+          "availability": "24x7",
+          "contact_number": "Not Available",
+          "address": "Ponnampet, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "PON002",
+          "hospital_name": "Primary Health Centre Ponnampet",
+          "type": "Government",
+          "specialties": ["Outpatient Care", "Maternal Health", "Child Care"],
+          "emergency_services": false,
+          "availability": "Daytime",
+          "contact_number": "Not Available",
+          "address": "Ponnampet, Kodagu, Karnataka"
+        }
+      ]
+    },
+    {
+      "location": "Gonikoppa",
+      "hospitals": [
+        {
+          "hospital_id": "GON001",
+          "hospital_name": "Government Hospital Gonikoppa",
+          "type": "Government",
+          "specialties": ["General Medicine", "Emergency Care"],
+          "emergency_services": true,
+          "availability": "24x7",
+          "contact_number": "Not Available",
+          "address": "Gonikoppa, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "GON002",
+          "hospital_name": "Primary Health Centre Gonikoppa",
+          "type": "Government",
+          "specialties": ["Outpatient Care", "Vaccination", "Maternal Care"],
+          "emergency_services": false,
+          "availability": "Daytime",
+          "contact_number": "Not Available",
+          "address": "Gonikoppa, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "GON003",
+          "hospital_name": "Coorg Medical Centre Gonikoppa",
+          "type": "Private",
+          "specialties": ["General Medicine", "Diagnostics"],
+          "emergency_services": false,
+          "availability": "Daytime",
+          "contact_number": "Not Available",
+          "address": "Gonikoppa, Kodagu, Karnataka"
+        }
+      ]
+    },
+    {
+      "location": "Virajpet",
+      "hospitals": [
+        {
+          "hospital_id": "VIR001",
+          "hospital_name": "Government Hospital Virajpet",
+          "type": "Government",
+          "specialties": ["General Medicine", "Emergency Care", "Surgery"],
+          "emergency_services": true,
+          "availability": "24x7",
+          "contact_number": "Not Available",
+          "address": "Virajpet, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "VIR002",
+          "hospital_name": "St. Anne's Hospital Virajpet",
+          "type": "Private",
+          "specialties": ["Gynecology", "Pediatrics", "General Medicine"],
+          "emergency_services": true,
+          "availability": "24x7",
+          "contact_number": "Not Available",
+          "address": "Virajpet, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "VIR003",
+          "hospital_name": "City Care Clinic Virajpet",
+          "type": "Private",
+          "specialties": ["General Medicine", "Diabetes Care"],
+          "emergency_services": false,
+          "availability": "Daytime",
+          "contact_number": "Not Available",
+          "address": "Virajpet, Kodagu, Karnataka"
+        }
+      ]
+    },
+    {
+      "location": "Madikeri",
+      "hospitals": [
+        {
+          "hospital_id": "MAD001",
+          "hospital_name": "District Hospital Madikeri",
+          "type": "Government",
+          "specialties": [
+            "General Medicine",
+            "Emergency Care",
+            "Orthopedics",
+            "Gynecology",
+            "Pediatrics"
+          ],
+          "emergency_services": true,
+          "availability": "24x7",
+          "contact_number": "Not Available",
+          "address": "Madikeri, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "MAD002",
+          "hospital_name": "Coorg Institute of Medical Sciences (CIMS)",
+          "type": "Government Medical College Hospital",
+          "specialties": [
+            "General Medicine",
+            "Surgery",
+            "ENT",
+            "Dermatology",
+            "Orthopedics"
+          ],
+          "emergency_services": true,
+          "availability": "24x7",
+          "contact_number": "Not Available",
+          "address": "Madikeri, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "MAD003",
+          "hospital_name": "Vivus Hospital Madikeri",
+          "type": "Private",
+          "specialties": ["Emergency Care", "Diagnostics", "General Medicine"],
+          "emergency_services": true,
+          "availability": "24x7",
+          "contact_number": "Not Available",
+          "address": "Madikeri, Kodagu, Karnataka"
+        },
+        {
+          "hospital_id": "MAD004",
+          "hospital_name": "Ashwini Hospital Madikeri",
+          "type": "Private",
+          "specialties": ["General Medicine", "Gynecology"],
+          "emergency_services": false,
+          "availability": "Daytime",
+          "contact_number": "Not Available",
+          "address": "Madikeri, Kodagu, Karnataka"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,484 @@
+====================================================================
+HEALTHCARE CHATBOT : SYMPTOM-BASED MEDICAL GUIDANCE SYSTEM
+====================================================================
+
+DISCLAIMER:
+This chatbot provides general health information only.
+It does NOT replace consultation with a doctor.
+Do NOT take antibiotics, steroids, blood thinners, or cancer medicines
+without a doctor's prescription.
+
+====================================================================
+REPORTED / COMMON SYMPTOMS SUPPORTED
+====================================================================
+
+Fever, cough (dry/wet), cold, sore throat, headache, body pain,
+muscle pain, weakness, dizziness, breathlessness, chest pain,
+stomach pain, nausea, vomiting, diarrhea, skin rash, swelling,
+urinary pain, mental stress, fatigue.
+
+====================================================================
+SYMPTOM-BASED MEDICINE & CARE GUIDANCE
+====================================================================
+
+--------------------------------------------------
+1) FEVER / BODY PAIN / HEADACHE
+--------------------------------------------------
+Possible cause:
+- Viral infection, dehydration, seasonal illness
+
+Medicine:
+- Paracetamol 500–650 mg
+Dosage:
+- 1 tablet every 6–8 hours (ONLY if fever/pain present)
+Maximum:
+- Do NOT exceed 3000 mg in 24 hours
+Duration:
+- 2 to 3 days only
+
+Home care:
+- Rest well
+- Drink warm water
+- Lukewarm sponging for high fever
+
+Consult doctor if:
+- Fever lasts more than 3 days
+- Fever returns repeatedly
+- Fever is above 103°F
+
+--------------------------------------------------
+2) COUGH / SORE THROAT / COLD
+--------------------------------------------------
+Possible cause:
+- Viral upper respiratory infection
+
+Medicine:
+- Dry cough → Dextromethorphan syrup
+- Wet cough → Guaifenesin expectorant
+
+Dosage:
+- 5–10 ml, 2 to 3 times daily
+Duration:
+- 3 to 5 days
+
+Sore throat care:
+- Warm saltwater gargling (2–3 times/day)
+- Warm fluids, avoid cold drinks
+
+Consult doctor if:
+- Cough lasts more than 7 days
+- Blood in cough
+- Severe breathlessness
+
+--------------------------------------------------
+3) BREATHLESSNESS / CHEST TIGHTNESS (MILD)
+--------------------------------------------------
+Possible cause:
+- Anxiety, infection, asthma history
+
+Immediate steps:
+- Sit upright
+- Slow deep breathing
+- Avoid exertion
+
+IMPORTANT:
+- NO self-medication
+
+EMERGENCY if:
+- Breathlessness at rest
+- Blue lips/fingertips
+- Chest pain with sweating
+
+--------------------------------------------------
+4) CHEST PAIN (CRITICAL SYMPTOM)
+--------------------------------------------------
+Possible serious causes:
+- Heart attack
+- Blood clot
+- Severe infection
+
+WARNING SIGNS (CALL EMERGENCY IMMEDIATELY):
+- Crushing or pressure-like chest pain
+- Pain spreading to left arm/jaw/back
+- Sweating, nausea, dizziness
+- Sudden breathlessness
+
+ACTION:
+- Go to nearest emergency hospital immediately
+
+--------------------------------------------------
+5) STOMACH PAIN / VOMITING / DIARRHEA
+--------------------------------------------------
+Possible cause:
+- Food infection, viral gastroenteritis
+
+Care:
+- ORS solution after loose stools
+- Light food (rice, curd, banana)
+- Avoid oily/spicy food
+
+Medicine:
+- ORS only (NO antibiotics without doctor)
+
+Consult doctor if:
+- Vomiting lasts >24 hours
+- Blood in vomit or stool
+- Severe abdominal pain
+
+--------------------------------------------------
+6) DIZZINESS / WEAKNESS
+--------------------------------------------------
+Possible cause:
+- Low BP, dehydration, stress
+
+Care:
+- Sit or lie down
+- Drink fluids
+- Avoid sudden standing
+
+Consult doctor if:
+- Repeated fainting
+- One-sided weakness
+- Speech difficulty
+
+--------------------------------------------------
+7) SKIN RASH / SWELLING
+--------------------------------------------------
+Possible cause:
+- Allergy, infection
+
+Care:
+- Keep area clean and dry
+- Avoid scratching
+
+Medicine:
+- Antihistamine ONLY if advised
+
+EMERGENCY if:
+- Facial or throat swelling
+- Difficulty breathing
+- Rapidly spreading rash
+
+--------------------------------------------------
+8) URINARY PAIN / BURNING
+--------------------------------------------------
+Possible cause:
+- Urinary infection or dehydration
+
+Care:
+- Drink plenty of water
+- Do NOT hold urine
+
+Consult doctor if:
+- Blood in urine
+- Fever with urinary pain
+- Symptoms >2 days
+
+--------------------------------------------------
+9) MENTAL STRESS / ANXIETY
+--------------------------------------------------
+Possible cause:
+- Overwork, illness stress
+
+Care:
+- Proper sleep
+- Breathing exercises
+- Reduce screen time
+- Talk to someone trusted
+
+Consult doctor if:
+- Panic attacks
+- Depression lasting >2 weeks
+- Thoughts of self-harm
+
+--------------------------------------------------
+1) MIGRAINE
+--------------------------------------------------
+Possible symptoms:
+- vomiting, body, pain, headache, fever
+
+Home care:
+- Rest in dark room, avoid screen
+
+Doctor may prescribe:
+- Paracetamol 650mg + Domperidone once during pain
+
+Consult doctor if:
+- Symptoms worsen
+- Symptoms last more than 3-5 days
+- Fever above 103°F or severe pain
+
+
+--------------------------------------------------
+2) HEART PROBLEM
+--------------------------------------------------
+Possible symptoms:
+- vomiting, body, pain, headache, fever
+
+Home care:
+- Rest, fluids, light food
+
+Doctor may prescribe:
+- Immediate hospital visit – ECG and cardiologist consultation required
+
+Consult doctor if:
+- Symptoms worsen
+- Symptoms last more than 3-5 days
+- Fever above 103°F or severe pain
+
+
+--------------------------------------------------
+3) VIRAL INFECTION
+--------------------------------------------------
+Possible symptoms:
+- vomiting, body, pain, headache, fever
+
+Home care:
+- Paracetamol 500mg, warm fluids, rest
+
+Doctor may prescribe:
+- Paracetamol 650mg twice daily after food for 3 days
+
+Consult doctor if:
+- Symptoms worsen
+- Symptoms last more than 3-5 days
+- Fever above 103°F or severe pain
+
+
+--------------------------------------------------
+4) FOOD POISONING
+--------------------------------------------------
+Possible symptoms:
+- vomiting, body, pain, headache, fever
+
+Home care:
+- ORS, light food, fluids
+
+Doctor may prescribe:
+- ORS after every loose stool + Ondansetron 4mg if vomiting
+
+Consult doctor if:
+- Symptoms worsen
+- Symptoms last more than 3-5 days
+- Fever above 103°F or severe pain
+
+
+--------------------------------------------------
+5) COMMON COLD
+--------------------------------------------------
+Possible symptoms:
+- vomiting, body, pain, headache, fever
+
+Home care:
+- Steam inhalation, warm water gargle
+
+Doctor may prescribe:
+- Cetirizine 10mg once daily at night for 3 days
+
+Consult doctor if:
+- Symptoms worsen
+- Symptoms last more than 3-5 days
+- Fever above 103°F or severe pain
+
+
+--------------------------------------------------
+6) GENERAL WEAKNESS
+--------------------------------------------------
+Possible symptoms:
+- vomiting, body, pain, headache, fever
+
+Home care:
+- Nutritious diet, rest
+
+Doctor may prescribe:
+- Multivitamin tablet once daily for 30 days
+
+Consult doctor if:
+- Symptoms worsen
+- Symptoms last more than 3-5 days
+- Fever above 103°F or severe pain
+
+
+--------------------------------------------------
+COMMON COLD
+--------------------------------------------------
+Reported symptoms:
+- - body pain
+- body pain chest pain
+- body pain chest pain headache
+
+Home Care / Self-medication:
+- Steam inhalation, warm water gargle
+
+Doctor may prescribe:
+- Cetirizine 10mg once daily at night for 3 days
+
+When to seek medical help:
+- Symptoms persist for more than 3-5 days
+- Symptoms worsen significantly
+- Additional severe symptoms develop
+- High fever (above 103°F) or severe pain
+
+
+--------------------------------------------------
+FOOD POISONING
+--------------------------------------------------
+Reported symptoms:
+- - body pain
+- body pain chest pain
+- body pain chest pain headache
+
+Home Care / Self-medication:
+- ORS, light food, fluids
+
+Doctor may prescribe:
+- ORS after every loose stool + Ondansetron 4mg if vomiting
+
+When to seek medical help:
+- Symptoms persist for more than 3-5 days
+- Symptoms worsen significantly
+- Additional severe symptoms develop
+- High fever (above 103°F) or severe pain
+
+
+--------------------------------------------------
+GENERAL WEAKNESS
+--------------------------------------------------
+Reported symptoms:
+- - body pain
+- body pain chest pain
+- body pain chest pain fever
+
+Home Care / Self-medication:
+- Nutritious diet, rest
+
+Doctor may prescribe:
+- Multivitamin tablet once daily for 30 days
+
+When to seek medical help:
+- Symptoms persist for more than 3-5 days
+- Symptoms worsen significantly
+- Additional severe symptoms develop
+- High fever (above 103°F) or severe pain
+
+
+--------------------------------------------------
+HEART PROBLEM
+--------------------------------------------------
+Reported symptoms:
+- - body pain
+- body pain chest pain
+- body pain cold
+
+Home Care / Self-medication:
+- Do not self-medicate
+
+Doctor may prescribe:
+- Immediate hospital visit – ECG and cardiologist consultation required
+
+When to seek medical help:
+- Symptoms persist for more than 3-5 days
+- Symptoms worsen significantly
+- Additional severe symptoms develop
+- High fever (above 103°F) or severe pain
+
+
+--------------------------------------------------
+MIGRAINE
+--------------------------------------------------
+Reported symptoms:
+- - body pain
+- body pain chest pain
+- body pain chest pain vomiting
+
+Home Care / Self-medication:
+- Rest in dark room, avoid screen
+
+Doctor may prescribe:
+- Paracetamol 650mg + Domperidone once during pain
+
+When to seek medical help:
+- Symptoms persist for more than 3-5 days
+- Symptoms worsen significantly
+- Additional severe symptoms develop
+- High fever (above 103°F) or severe pain
+
+
+--------------------------------------------------
+VIRAL INFECTION
+--------------------------------------------------
+Reported symptoms:
+- - body pain
+- body pain chest pain
+- body pain cold
+
+Home Care / Self-medication:
+- Paracetamol 500mg, warm fluids, rest
+
+Doctor may prescribe:
+- Paracetamol 650mg twice daily after food for 3 days
+
+When to seek medical help:
+- Symptoms persist for more than 3-5 days
+- Symptoms worsen significantly
+- Additional severe symptoms develop
+- High fever (above 103°F) or severe pain
+
+
+====================================================================
+LONG-DURATION SYMPTOMS RULE (7 DAYS ALERT)
+====================================================================
+
+ANY symptom lasting more than 7 days requires medical evaluation:
+- Persistent fever
+- Continuous cough
+- Long-term fatigue
+- Chronic pain
+- Recurrent swelling
+
+These may indicate:
+- Bacterial infection
+- Chronic illness
+- Hormonal disorder
+- Serious disease
+
+====================================================================
+SERIOUS RED-FLAG CONDITIONS (DO NOT IGNORE)
+====================================================================
+
+BLOOD CLOT WARNING:
+- Sudden chest pain
+- One leg swelling/pain
+- Sudden breathlessness
+
+CANCER WARNING:
+- Unexplained weight loss
+- Persistent lump or swelling
+- Blood in urine, cough, or stool
+- Symptoms lasting weeks/months
+
+HEART ATTACK WARNING:
+- Severe chest pressure
+- Left arm/jaw pain
+- Sweating + nausea
+
+STROKE WARNING:
+- One-sided weakness
+- Slurred speech
+- Facial drooping
+
+ACTION:
+- Seek emergency medical care immediately
+
+====================================================================
+FINAL SAFETY MESSAGE
+====================================================================
+
+This chatbot provides INITIAL guidance only.
+Never ignore worsening symptoms.
+Never self-medicate with strong drugs.
+Always consult a qualified doctor when in doubt.
+
+====================================================================
+END OF HEALTHCARE CHATBOT RESPONSE
+====================================================================

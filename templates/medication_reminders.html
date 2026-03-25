@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>💊 Medication Reminders</h2>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-secondary btn-sm">Back to Dashboard</a>
+  </div>
+
+  {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+      {{ error }}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+  {% endif %}
+
+  <!-- Add New Medication Card -->
+  <div class="card mb-4 shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Add New Medication</h5>
+    </div>
+    <div class="card-body">
+      <form method="post" action="{{ url_for('medication.medication_reminders') }}" novalidate>
+        <div class="row g-3">
+          <div class="col-md-3">
+            <label for="medication_name" class="form-label">Medication Name <span class="text-danger">*</span></label>
+            <input class="form-control" id="medication_name" name="medication_name" placeholder="e.g., Aspirin" required>
+            <small class="text-muted">Required field</small>
+          </div>
+          <div class="col-md-2">
+            <label for="dosage" class="form-label">Dosage</label>
+            <input class="form-control" id="dosage" name="dosage" placeholder="e.g., 500 mg">
+            <small class="text-muted">e.g., 500 mg, 2 tabs</small>
+          </div>
+          <div class="col-md-3">
+            <label for="frequency" class="form-label">Frequency</label>
+            <input class="form-control" id="frequency" name="frequency" placeholder="e.g., Twice daily">
+            <small class="text-muted">e.g., Once daily, Twice daily</small>
+          </div>
+          <div class="col-md-2">
+            <label for="reminder_time" class="form-label">Reminder Time</label>
+            <input class="form-control" id="reminder_time" name="reminder_time" type="time" />
+            <small class="text-muted">HH:MM format (24h)</small>
+          </div>
+          <div class="col-md-2 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary w-100">
+              <i class="fas fa-save"></i> Add Reminder
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Medication Reminders List -->
+  {% if reminders and reminders|length > 0 %}
+    <div class="row g-3">
+      {% for r in reminders %}
+        <div class="col-md-6 col-lg-4">
+          <div class="card shadow-sm h-100 border-start border-5 {% if r.is_active %}border-success{% else %}border-secondary{% endif %}">
+            <div class="card-header {% if r.is_active %}bg-success{% else %}bg-secondary{% endif %} text-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">{{ r.medication_name }}</h6>
+              <span class="badge bg-light {% if r.is_active %}text-success{% else %}text-secondary{% endif %}">
+                {% if r.is_active %}<i class="fas fa-check-circle"></i> Active{% else %}<i class="fas fa-pause-circle"></i> Inactive{% endif %}
+              </span>
+            </div>
+            <div class="card-body">
+              <!-- Dosage -->
+              <div class="mb-3">
+                <small class="text-muted d-block mb-1">
+                  <i class="fas fa-capsules text-primary"></i> Dosage
+                </small>
+                <p class="mb-0">
+                  <strong>{{ r.dosage or '—' }}</strong>
+                </p>
+              </div>
+
+              <!-- Frequency -->
+              <div class="mb-3">
+                <small class="text-muted d-block mb-1">
+                  <i class="fas fa-sync-alt text-info"></i> Frequency
+                </small>
+                <p class="mb-0">
+                  <strong>{{ r.frequency or '—' }}</strong>
+                </p>
+              </div>
+
+              <!-- Reminder Time -->
+              <div class="mb-3">
+                <small class="text-muted d-block mb-1">
+                  <i class="fas fa-clock text-warning"></i> Reminder Time
+                </small>
+                <p class="mb-0">
+                  <strong>{{ r.reminder_time or '—' }}</strong>
+                </p>
+              </div>
+
+              <!-- Status -->
+              <div class="mb-3">
+                <small class="text-muted d-block mb-1">
+                  <i class="fas fa-heartbeat text-danger"></i> Status
+                </small>
+                <p class="mb-0">
+                  {% if r.is_active %}
+                    <span class="badge bg-success"><i class="fas fa-check"></i> Active</span>
+                  {% else %}
+                    <span class="badge bg-secondary"><i class="fas fa-times"></i> Inactive</span>
+                  {% endif %}
+                </p>
+              </div>
+
+              <!-- ID -->
+              <div>
+                <small class="text-muted d-block mb-1">Reminder ID</small>
+                <p class="mb-0">
+                  <code class="text-muted">#{{ r.id }}</code>
+                </p>
+              </div>
+            </div>
+            <div class="card-footer bg-light">
+              <div class="d-flex gap-2">
+                <a href="https://wa.me/918951069185?text=Reminder: Time to take your {{ r.medication_name }}. Dosage: {{ r.dosage or 'as prescribed' }}" class="btn btn-success btn-sm flex-fill" role="button" aria-label="Send WhatsApp Reminder">
+                  <i class="fab fa-whatsapp"></i> Send WhatsApp Reminder
+                </a>
+                <form method="post" action="{{ url_for('medication.delete_medication_reminder', reminder_id=r.id) }}" class="flex-fill m-0">
+                  <button type="submit" class="btn btn-outline-danger btn-sm w-100" onclick="return confirm('Are you sure you want to delete &quot;{{ r.medication_name }}&quot;?')">
+                    <i class="fas fa-trash-alt"></i> Delete Reminder
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="row mt-4">
+      <div class="col-md-4">
+        <div class="card bg-light">
+          <div class="card-body text-center">
+            <h3 class="card-title">{{ reminders|length }}</h3>
+            <p class="card-text text-muted">Total Reminders</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-light">
+          <div class="card-body text-center">
+            <h3 class="card-title">{{ reminders|selectattr('is_active')|list|length }}</h3>
+            <p class="card-text text-muted">Active Reminders</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card bg-light">
+          <div class="card-body text-center">
+            <h3 class="card-title">{{ reminders|rejectattr('is_active')|list|length }}</h3>
+            <p class="card-text text-muted">Inactive Reminders</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div class="alert alert-info text-center py-5" role="alert">
+      <i class="fas fa-info-circle fa-3x mb-3 d-block text-info"></i>
+      <h5>No Medication Reminders Yet</h5>
+      <p class="mb-0">Add your first medication reminder above to get started. Never miss a dose again!</p>
+    </div>
+  {% endif %}
+
+</div>
+
+<!-- Font Awesome Icons (if not already loaded in base) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+{% endblock %}
